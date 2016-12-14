@@ -1,0 +1,26 @@
+<resources>
+    <string name="app_name">Dribbbee</string>
+
+    <string name="title_home">Dribbbo</string>
+    <string name="title_likes">Likes</string>
+    <string name="title_buckets">Buckets</string>
+
+    <string name="activity_login_btn_text">Log into Dribbble</string>
+    <string name="activity_login_icon">Dribbble icon</string>
+
+    <string name="auth_activity_title">Log into Dribbble</string>
+
+    <string name="user_profile_picture">User profile picture</string>
+
+    <string name="logout">Log out</string>
+
+    <string name="drawer_menu_home">Home</string>
+    <string name="drawer_menu_likes">Likes</string>
+    <string name="drawer_menu_buckets">Buckets</string>
+
+    <string name="open_drawer">open drawer</string>
+    <string name="close_drawer">close drawer</string>
+
+    <!--list_item_shot-->
+    <string name="shot_image">Shot image</string>
+</resources>
