@@ -28,12 +28,7 @@ public class Auth {
 
     public static final int REQ_CODE = 100;
 
-    public static final String URI_AUTHORIZE = "https://dribbble.com/oauth/authorize";
-    public static final String URI_REDIRECT = "http://www.dribbbee.com";
-
-    private static final String URI_TOKEN = "https://dribbble.com/oauth/token";
-    public static final String REDIRECT_URI = "http://www.dribbbee.com";
-
+    private static final String KEY_CODE = "code";
     private static final String KEY_CLIENT_ID = "client_id";
     private static final String KEY_CLIENT_SECRET = "client_secret";
     private static final String KEY_REDIRECT_URI = "redirect_uri";
@@ -49,13 +44,10 @@ public class Auth {
     // see http://developer.dribbble.com/v1/oauth/#scopes
     private static final String SCOPE = "public+write";
 
-    public static void openAuthActivity(@NonNull Activity activity) {
-        Intent intent = new Intent(activity, AuthActivity.class);
-        intent.putExtra(AuthActivity.KEY_URL, getAuthorizeUrl());
+    private static final String URI_AUTHORIZE = "https://dribbble.com/oauth/authorize";
+    private static final String URI_TOKEN = "https://dribbble.com/oauth/token";
 
-        activity.startActivityForResult(intent, REQ_CODE);
-    }
-
+    public static final String REDIRECT_URI = "http://www.dribbbee.com";
 
     private static String getAuthorizeUrl() {
         String url = Uri.parse(URI_AUTHORIZE)
@@ -71,7 +63,26 @@ public class Auth {
         return url;
     }
 
-    public static String fetchAccessToken(String authCode) throws IOException {
+    private static String getTokenUrl(String authCode) {
+        return Uri.parse(URI_TOKEN)
+                .buildUpon()
+                .appendQueryParameter(KEY_CLIENT_ID, CLIENT_ID)
+                .appendQueryParameter(KEY_CLIENT_SECRET, CLIENT_SECRET)
+                .appendQueryParameter(KEY_CODE, authCode)
+                .appendQueryParameter(KEY_REDIRECT_URI, REDIRECT_URI)
+                .build()
+                .toString();
+    }
+
+    public static void openAuthActivity(@NonNull Activity activity) {
+        Intent intent = new Intent(activity, AuthActivity.class);
+        intent.putExtra(AuthActivity.KEY_URL, getAuthorizeUrl());
+
+        activity.startActivityForResult(intent, REQ_CODE);
+    }
+
+    public static String fetchAccessToken(String authCode)
+            throws IOException {
         OkHttpClient client = new OkHttpClient();
         RequestBody postBody = new FormBody.Builder()
                 .add(KEY_CLIENT_ID, CLIENT_ID)
@@ -86,8 +97,6 @@ public class Auth {
         Response response = client.newCall(request).execute();
 
         String responseString = response.body().string();
-
-        Log.i("Auth-xqc", responseString);
         try {
             JSONObject obj = new JSONObject(responseString);
             return obj.getString(KEY_ACCESS_TOKEN);

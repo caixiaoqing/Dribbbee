@@ -10,13 +10,17 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.CookieManager;
+import android.webkit.CookieSyncManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 
 import com.caixiaoqing.dribbbee.R;
+import com.caixiaoqing.dribbbee.dribbble.Dribbble;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -34,30 +38,44 @@ public class AuthActivity extends AppCompatActivity {
     @BindView(R.id.webview) WebView webView;
     @BindView(R.id.toolbar) Toolbar toolbar;
 
+    //private WebView webView;
+
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_webview);
         ButterKnife.bind(this);
+
+        //webView = (WebView)findViewById(R.id.webview);
 
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         setTitle(getString(R.string.auth_activity_title));
 
-        Log.i("xqc", "onCreate AuthActivity");
-        progressBar.setMax(100);
-        setupWebView();
 
-        String url = getIntent().getStringExtra(KEY_URL);
-        webView.loadUrl(url);
-    }
 
-    private void setupWebView() {
-        webView.setWebViewClient(new WebViewClient(){
+        //progressBar.setMax(100);
+        //CookieSyncManager.createInstance(this);
+        //CookieManager cookieManager = CookieManager.getInstance();
+        //cookieManager.removeAllCookies(callback);
+        //cookieManager.setAcceptCookie(false);
+
+        //WebSettings ws = webView.getSettings();
+        //ws.setSaveFormData(false);
+        //ws.setSavePassword(false);
+
+        webView.clearCache(true);
+        webView.clearHistory();
+
+
+        //CookieManager cookieManager = CookieManager.getInstance();
+        //cookieManager.setAcceptCookie(false);
+
+        webView.setWebViewClient(new WebViewClient() {
+
             @Override
-            //public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (url.startsWith(Auth.URI_REDIRECT)) {
+                if (url.startsWith(Auth.REDIRECT_URI)) {
                     Log.i("xqc", "onCreate Auth.URI_REDIRECT");
                     Uri uri = Uri.parse(url);
                     Intent resultIntent = new Intent();
@@ -65,30 +83,36 @@ public class AuthActivity extends AppCompatActivity {
                     setResult(RESULT_OK, resultIntent);
                     finish();
                 }
+
+                Log.i("xqc", "onCreate NOT Auth.URI_REDIRECT"+url);
                 return super.shouldOverrideUrlLoading(view, url);
             }
 
+            /*
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 progressBar.setVisibility(View.VISIBLE);
                 progressBar.setProgress(0);
-                //super.onPageStarted(view, url, favicon); TODO
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
                 progressBar.setVisibility(View.GONE);
-                //super.onPageFinished(view, url); TODO
-            }
+            }*/
         });
 
-        webView.setWebChromeClient(new WebChromeClient(){
+        /*
+        webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
                 progressBar.setProgress(newProgress);
-                //super.onProgressChanged(view, newProgress); TODO
             }
-        });
+        });*/
+
+        String url = getIntent().getStringExtra(KEY_URL);
+
+        Log.i("xqc", "webView.loadUrl" + url);
+        webView.loadUrl(url);
     }
 
     @Override
