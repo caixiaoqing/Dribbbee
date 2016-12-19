@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 
 import com.caixiaoqing.dribbbee.R;
 import com.caixiaoqing.dribbbee.model.Shot;
+import com.caixiaoqing.dribbbee.model.User;
 import com.caixiaoqing.dribbbee.view.base.SpaceItemDecoration;
 
 import java.util.ArrayList;
@@ -44,13 +45,11 @@ public class ShotListFragment extends Fragment {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        //TODO
         recyclerView.addItemDecoration(new SpaceItemDecoration(
                getResources().getDimensionPixelSize(R.dimen.spacing_medium)));
 
         ShotListAdapter adapter = new ShotListAdapter(fakeData());
         recyclerView.setAdapter(adapter);
-        //super.onViewCreated(view, savedInstanceState); TODO
     }
 
     private List<Shot> fakeData() {
@@ -58,9 +57,14 @@ public class ShotListFragment extends Fragment {
         Random random = new Random();
         for (int i = 0; i < 20; ++i) {
             Shot shot = new Shot();
+            shot.title = "shot" + i;
             shot.views_count = random.nextInt(10000);
             shot.likes_count = random.nextInt(200);
             shot.buckets_count = random.nextInt(50);
+
+            shot.user = new User();
+            shot.user.name = shot.title + " author";
+
             shotList.add(shot);
         }
         return shotList;
