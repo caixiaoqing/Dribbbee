@@ -41,6 +41,7 @@ public abstract class SingleFragmentActivity extends AppCompatActivity {
         setTitle(getActivityTitle());
 
         //Step 4: getSupportFragmentManager->add (child)
+        //Data flow 3:  *** -> newFragment() child
         if (savedInstanceState == null) {
             getSupportFragmentManager()
                     .beginTransaction()

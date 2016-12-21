@@ -23,45 +23,98 @@ import java.util.List;
 
 public class ShotListAdapter extends RecyclerView.Adapter{
 
-    private List<Shot> data;
+    private static final int VIEW_TYPE_SHOT = 1;
+    private static final int VIEW_TYPE_LOADING = 2;
 
-    public ShotListAdapter(@NonNull List<Shot> data) {
+    private List<Shot> data;
+    //Infinite loading list 4: callback for onLoadMore (ShotListFragment)
+    private LoadMoreListener loadMoreListener;
+    private boolean showLoading;
+
+    public ShotListAdapter(@NonNull List<Shot> data, @NonNull LoadMoreListener loadMoreListener) {
         this.data = data;
+        this.loadMoreListener = loadMoreListener;
+        this.showLoading = true;
     }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.list_item_shot, parent, false);
-        return new ShotViewHolder(view);
+        if (viewType == VIEW_TYPE_SHOT) {
+            View view = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.list_item_shot, parent, false);
+            return new ShotViewHolder(view);
+        } else {
+
+            //Infinite loading list 2: loading xml -- list_item_loading + (no data binding)
+            View view = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.list_item_loading, parent, false);
+            return new RecyclerView.ViewHolder(view) {};
+        }
     }
 
     @Override
     public void onBindViewHolder(final RecyclerView.ViewHolder holder, int position) {
-        final Shot shot = data.get(position);
+        //Infinite loading list 3:  3.1 data binding - shot
+        //                          3.2 load more data	(in a separate thread) -> come back to UI
+        if (holder instanceof ShotViewHolder) {
+            final Shot shot = data.get(position);
 
-        ShotViewHolder shotViewHolder = (ShotViewHolder) holder;
-        shotViewHolder.likeCount.setText(String.valueOf(shot.likes_count));
-        shotViewHolder.bucketCount.setText(String.valueOf(shot.buckets_count));
-        shotViewHolder.viewCount.setText(String.valueOf(shot.views_count));
-        shotViewHolder.image.setImageResource(R.drawable.shot_placeholder);
+            ShotViewHolder shotViewHolder = (ShotViewHolder) holder;
+            shotViewHolder.likeCount.setText(String.valueOf(shot.likes_count));
+            shotViewHolder.bucketCount.setText(String.valueOf(shot.buckets_count));
+            shotViewHolder.viewCount.setText(String.valueOf(shot.views_count));
+            shotViewHolder.image.setImageResource(R.drawable.shot_placeholder);
 
-        //Go to ShotActivity
-        shotViewHolder.cover.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Context context = holder.itemView.getContext();
-                Intent intent = new Intent(context, ShotActivity.class);
-                intent.putExtra(ShotFragment.KEY_SHOT,
-                        ModelUtils.toString(shot, new TypeToken<Shot>(){}));
-                intent.putExtra(ShotActivity.KEY_SHOT_TITLE, shot.title);
-                context.startActivity(intent);
-            }
-        });
+            //Go to ShotActivity
+            //Data flow 2: ShotListAdapter (intent) -> ShotActivity (SingleFragmentActivity newFragment)
+            shotViewHolder.cover.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Context context = holder.itemView.getContext();
+                    Intent intent = new Intent(context, ShotActivity.class);
+                    intent.putExtra(ShotFragment.KEY_SHOT,
+                            ModelUtils.toString(shot, new TypeToken<Shot>() {
+                            }));
+                    intent.putExtra(ShotActivity.KEY_SHOT_TITLE, shot.title);
+                    context.startActivity(intent);
+                }
+            });
+        }
+        else {
+            //Infinite loading list 5
+            loadMoreListener.onLoadMore();
+        }
+    }
+
+    //Infinite loading list 1: shot + loading
+    @Override
+    public int getItemCount() {
+        return showLoading ? data.size() + 1 : data.size();
     }
 
     @Override
-    public int getItemCount() {
+    public int getItemViewType(int position) {
+        return position < data.size()
+                ? VIEW_TYPE_SHOT
+                : VIEW_TYPE_LOADING;
+    }
+
+    //Infinite loading list 6 -> come back to UI
+    public void append(@NonNull List<Shot> moreShots) {
+        data.addAll(moreShots);
+        notifyDataSetChanged();
+    }
+
+    public int getDataCount() {
         return data.size();
+    }
+
+    public void setShowLoading(boolean showLoading) {
+        this.showLoading = showLoading;
+        notifyDataSetChanged();
+    }
+
+    public interface LoadMoreListener {
+        void onLoadMore();
     }
 }

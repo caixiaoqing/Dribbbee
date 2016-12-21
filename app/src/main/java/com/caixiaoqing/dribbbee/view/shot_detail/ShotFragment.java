@@ -29,6 +29,7 @@ public class ShotFragment extends Fragment {
     @BindView(R.id.recycler_view)
     RecyclerView recyclerView;
 
+    //Data flow 5 :
     public static ShotFragment newInstance(@NonNull Bundle args) {
         ShotFragment fragment = new ShotFragment();
         fragment.setArguments(args);
