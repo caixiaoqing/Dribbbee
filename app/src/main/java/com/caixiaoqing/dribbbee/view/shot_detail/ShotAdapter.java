@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 
 import com.caixiaoqing.dribbbee.R;
 import com.caixiaoqing.dribbbee.model.Shot;
+import com.caixiaoqing.dribbbee.view.bucket_list.ChooseBucketActivity;
 import com.squareup.picasso.Picasso;
 
 /**
@@ -78,6 +79,12 @@ class ShotAdapter extends RecyclerView.Adapter{
                         share(v.getContext());
                     }
                 });
+                shotDetailViewHolder.bucketButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        bucket(v.getContext());
+                    }
+                });
                 break;
         }
     }
@@ -108,5 +115,11 @@ class ShotAdapter extends RecyclerView.Adapter{
 
         context.startActivity(Intent.createChooser(shareIntent,
                 context.getString(R.string.share_shot)));
+    }
+
+    private void bucket(Context context) {
+        Intent intent = new Intent(context, ChooseBucketActivity.class);
+        // TODO: we need to pass in the chosen bucket ids here
+        context.startActivity(intent);
     }
 }
