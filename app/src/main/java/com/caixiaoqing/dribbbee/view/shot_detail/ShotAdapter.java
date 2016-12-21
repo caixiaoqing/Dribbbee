@@ -1,7 +1,11 @@
 package com.caixiaoqing.dribbbee.view.shot_detail;
 
+import android.content.Context;
+import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.text.Html;
+import android.text.method.LinkMovementMethod;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -58,11 +62,22 @@ class ShotAdapter extends RecyclerView.Adapter{
                 InfoViewHolder shotDetailViewHolder = (InfoViewHolder) holder;
                 shotDetailViewHolder.title.setText(shot.title);
                 shotDetailViewHolder.authorName.setText(shot.user.name);
-                shotDetailViewHolder.description.setText(shot.description);
+
+                shotDetailViewHolder.description.setText(Html.fromHtml(
+                        shot.description == null ? "" : shot.description));
+                //For open the links
+                shotDetailViewHolder.description.setMovementMethod(LinkMovementMethod.getInstance());
 
                 shotDetailViewHolder.likeCount.setText(String.valueOf(shot.likes_count));
                 shotDetailViewHolder.bucketCount.setText(String.valueOf(shot.buckets_count));
                 shotDetailViewHolder.viewCount.setText(String.valueOf(shot.views_count));
+
+                shotDetailViewHolder.shareButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        share(v.getContext());
+                    }
+                });
                 break;
         }
     }
@@ -80,5 +95,18 @@ class ShotAdapter extends RecyclerView.Adapter{
         } else {
             return VIEW_TYPE_SHOT_INFO;
         }
+    }
+
+    private void share(Context context) {
+        Intent shareIntent = new Intent();
+        shareIntent.setAction(Intent.ACTION_SEND);
+        shareIntent.putExtra(Intent.EXTRA_TEXT, shot.title + " " + shot.html_url);
+        shareIntent.setType("text/plain");
+
+        //receiver is activity
+        //context.startActivity(shareIntent);
+
+        context.startActivity(Intent.createChooser(shareIntent,
+                context.getString(R.string.share_shot)));
     }
 }

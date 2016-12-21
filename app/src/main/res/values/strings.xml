@@ -27,4 +27,15 @@
     <string name="bucket">Bucket</string>
     <string name="share">Share</string>
     <string name="shot_author_picture">Shot author picture</string>
+
+    <string name="share_shot">Share this amazing shot!</string>
+
+    <string name="shot_count">{0,choice,0#0 shot|1#1 shot|1&lt;{0} shots}</string>
+    <string name="shot_detail_loading_buckets">Loading buckets, just one second…</string>
+    <string name="new_bucket_name">Bucket name</string>
+    <string name="new_bucket_description">Bucket description</string>
+    <string name="new_bucket_title">New bucket</string>
+    <string name="new_bucket_create">Create</string>
+    <string name="new_bucket_cancel">Cancel</string>
+
 </resources>

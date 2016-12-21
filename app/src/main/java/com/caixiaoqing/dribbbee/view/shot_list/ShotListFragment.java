@@ -36,7 +36,6 @@ import butterknife.ButterKnife;
 public class ShotListFragment extends Fragment {
     @BindView(R.id.recycler_view) RecyclerView recyclerView;
 
-    private static final int COUNT_PER_PAGE = 20;
     private ShotListAdapter adapter;
 
     public static ShotListFragment newInstance() {
@@ -68,7 +67,7 @@ public class ShotListFragment extends Fragment {
             public void onLoadMore() {
                 // this method will be called when the RecyclerView is displayed
                 // page starts from 1
-                AsyncTaskCompat.executeParallel(new LoadShotTask(adapter.getDataCount() / COUNT_PER_PAGE + 1));
+                AsyncTaskCompat.executeParallel(new LoadShotTask(adapter.getDataCount() / Dribbble.COUNT_PER_PAGE + 1));
             }
         });
         recyclerView.setAdapter(adapter);
@@ -106,7 +105,7 @@ public class ShotListFragment extends Fragment {
         List<Shot> shotList = new ArrayList<>();
         Random random = new Random();
 
-        int count = page < 2 ? COUNT_PER_PAGE : 10;
+        int count = page < 2 ? Dribbble.COUNT_PER_PAGE : 10;
 
         for (int i = 0; i < count; ++i) {
             Shot shot = new Shot();

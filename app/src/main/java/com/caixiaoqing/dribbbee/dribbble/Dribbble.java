@@ -9,6 +9,7 @@ import android.util.Log;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
 
+import com.caixiaoqing.dribbbee.model.Bucket;
 import com.caixiaoqing.dribbbee.model.Shot;
 import com.caixiaoqing.dribbbee.model.User;
 import com.caixiaoqing.dribbbee.utils.ModelUtils;
@@ -19,8 +20,10 @@ import com.google.gson.reflect.TypeToken;
 import java.io.IOException;
 import java.util.List;
 
+import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
 /**
@@ -30,16 +33,24 @@ import okhttp3.Response;
 public class Dribbble {
     private static final String TAG = "Dribbble API";
 
+    // Dribbble loads everything in a 12-per-page manner
+    public static final int COUNT_PER_PAGE = 12;
+
     private static final String API_URL = "https://api.dribbble.com/v1/";
 
     private static final String SHOTS_END_POINT = API_URL + "shots";
     private static final String USER_END_POINT = API_URL + "user";
+    private static final String BUCKETS_END_POINT = API_URL + "buckets";
 
     private static final String SP_AUTH = "auth";
 
     private static final String KEY_ACCESS_TOKEN = "access_token";
     private static final String KEY_USER = "user";
+    private static final String KEY_DESCRIPTION = "description";
+    private static final String KEY_NAME = "name";
 
+    private static final TypeToken<List<Bucket>> BUCKET_LIST_TYPE = new TypeToken<List<Bucket>>(){};
+    private static final TypeToken<Bucket> BUCKET_TYPE = new TypeToken<Bucket>(){};
     private static final TypeToken<List<Shot>> SHOT_LIST_TYPE = new TypeToken<List<Shot>>(){};
     private static final TypeToken<User> USER_TYPE = new TypeToken<User>(){};
 
@@ -62,6 +73,14 @@ public class Dribbble {
 
     private static Response makeGetRequest(String url) throws IOException {
         Request request = authRequestBuilder(url).build();
+        return makeRequest(request);
+    }
+
+    private static Response makePostRequest(String url,
+                                            RequestBody requestBody) throws IOException {
+        Request request = authRequestBuilder(url)
+                .post(requestBody)
+                .build();
         return makeRequest(request);
     }
 
@@ -167,5 +186,19 @@ public class Dribbble {
     public static List<Shot> getShots(int page) throws IOException, JsonSyntaxException {
         String url = SHOTS_END_POINT + "?page=" + page;
         return parseResponse(makeGetRequest(url), SHOT_LIST_TYPE);
+    }
+
+    public static List<Bucket> getUserBuckets(int page) throws IOException, JsonSyntaxException {
+        String url = USER_END_POINT + "/" + "buckets?page=" + page;
+        return parseResponse(makeGetRequest(url), BUCKET_LIST_TYPE);
+    }
+
+    public static Bucket newBucket(@NonNull String name,
+                                   @NonNull String description) throws IOException, JsonSyntaxException {
+        FormBody formBody = new FormBody.Builder()
+                .add(KEY_NAME, name)
+                .add(KEY_DESCRIPTION, description)
+                .build();
+        return parseResponse(makePostRequest(BUCKETS_END_POINT, formBody), BUCKET_TYPE);
     }
 }

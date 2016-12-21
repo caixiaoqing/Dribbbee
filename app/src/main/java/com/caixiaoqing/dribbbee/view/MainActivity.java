@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import com.caixiaoqing.dribbbee.R;
 import com.caixiaoqing.dribbbee.dribbble.Dribbble;
+import com.caixiaoqing.dribbbee.view.bucket_list.BucketListFragment;
 import com.caixiaoqing.dribbbee.view.shot_list.ShotListFragment;
 import com.squareup.picasso.Picasso;
 
@@ -101,9 +102,8 @@ public class MainActivity extends AppCompatActivity {
                         setTitle(R.string.title_likes);
                         break;
                     case R.id.drawer_item_buckets:
-                        //TODO BucketListFragment
-                        //fragment = BucketListFragment.newInstance();
-                        //setTitle(R.string.title_buckets);
+                        fragment = BucketListFragment.newInstance();
+                        setTitle(R.string.title_buckets);
                         break;
                 }
 
