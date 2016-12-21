@@ -1,9 +1,12 @@
 package com.caixiaoqing.dribbbee.view.shot_list;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
+import android.support.v4.os.AsyncTaskCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
@@ -13,10 +16,12 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import com.caixiaoqing.dribbbee.R;
+import com.caixiaoqing.dribbbee.dribbble.Dribbble;
 import com.caixiaoqing.dribbbee.model.Shot;
 import com.caixiaoqing.dribbbee.model.User;
 import com.caixiaoqing.dribbbee.view.base.SpaceItemDecoration;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -58,30 +63,43 @@ public class ShotListFragment extends Fragment {
         final Handler handler = new Handler();
 
         //Infinite loading list 5: load shot + load More
-        adapter = new ShotListAdapter(fakeData(0), new ShotListAdapter.LoadMoreListener() {
+        adapter = new ShotListAdapter(new ArrayList<Shot>(), new ShotListAdapter.LoadMoreListener() {
             @Override
             public void onLoadMore() {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            Thread.sleep(2000);
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    List<Shot> moreData = fakeData(adapter.getDataCount() / COUNT_PER_PAGE);
-                                    adapter.append(moreData);
-                                    adapter.setShowLoading(moreData.size() >= COUNT_PER_PAGE);
-                                }
-                            });
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }).start();
+                // this method will be called when the RecyclerView is displayed
+                // page starts from 1
+                AsyncTaskCompat.executeParallel(new LoadShotTask(adapter.getDataCount() / COUNT_PER_PAGE + 1));
             }
         });
         recyclerView.setAdapter(adapter);
+    }
+
+    private class LoadShotTask extends AsyncTask<Void, Void, List<Shot>> {
+
+        int page;
+
+        public LoadShotTask(int page) {
+            this.page = page;
+        }
+
+        @Override
+        protected List<Shot> doInBackground(Void... params) {
+            try {
+                return Dribbble.getShots(page);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(List<Shot> shots) {
+            if (shots != null) {
+                adapter.append(shots);
+            } else {
+                Snackbar.make(getView(), "Error!", Snackbar.LENGTH_LONG).show();
+            }
+        }
     }
 
     private List<Shot> fakeData(int page) {

@@ -14,6 +14,7 @@ import com.caixiaoqing.dribbbee.utils.ModelUtils;
 import com.caixiaoqing.dribbbee.view.shot_detail.ShotActivity;
 import com.caixiaoqing.dribbbee.view.shot_detail.ShotFragment;
 import com.google.gson.reflect.TypeToken;
+import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
@@ -63,7 +64,11 @@ public class ShotListAdapter extends RecyclerView.Adapter{
             shotViewHolder.likeCount.setText(String.valueOf(shot.likes_count));
             shotViewHolder.bucketCount.setText(String.valueOf(shot.buckets_count));
             shotViewHolder.viewCount.setText(String.valueOf(shot.views_count));
-            shotViewHolder.image.setImageResource(R.drawable.shot_placeholder);
+
+            Picasso.with(shotViewHolder.itemView.getContext())
+                    .load(shot.getImageUrl())
+                    .placeholder(R.drawable.shot_placeholder)
+                    .into(shotViewHolder.image);
 
             //Go to ShotActivity
             //Data flow 2: ShotListAdapter (intent) -> ShotActivity (SingleFragmentActivity newFragment)

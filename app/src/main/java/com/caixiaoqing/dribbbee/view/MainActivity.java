@@ -11,11 +11,13 @@ import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.caixiaoqing.dribbbee.R;
 import com.caixiaoqing.dribbbee.dribbble.Dribbble;
 import com.caixiaoqing.dribbbee.view.shot_list.ShotListFragment;
+import com.squareup.picasso.Picasso;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -78,21 +80,7 @@ public class MainActivity extends AppCompatActivity {
 
         drawerLayout.setDrawerListener(drawerToggle);
 
-        View headerView = navigationView.getHeaderView(0);
-
-        ((TextView) headerView.findViewById(R.id.nav_header_user_name)).setText(
-                Dribbble.getCurrentUser().name);
-
-        headerView.findViewById(R.id.nav_header_logout).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Dribbble.logout(MainActivity.this);
-
-                Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-                startActivity(intent);
-                finish();
-            }
-        });
+        setupNavHeader();
 
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
             @Override
@@ -130,6 +118,29 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 return false;
+            }
+        });
+    }
+
+    private void setupNavHeader() {
+        View headerView = navigationView.getHeaderView(0);
+
+        ((TextView) headerView.findViewById(R.id.nav_header_user_name)).setText(
+                Dribbble.getCurrentUser().name);
+
+        Picasso.with(this)
+                .load(Dribbble.getCurrentUser().avatar_url)
+                .placeholder(R.drawable.user_picture_placeholder)
+                .into((ImageView) headerView.findViewById(R.id.nav_header_user_picture));
+
+        headerView.findViewById(R.id.nav_header_logout).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Dribbble.logout(MainActivity.this);
+
+                Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+                startActivity(intent);
+                finish();
             }
         });
     }
