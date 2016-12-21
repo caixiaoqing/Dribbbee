@@ -2,7 +2,9 @@ package com.caixiaoqing.dribbbee.view.shot_detail;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
@@ -12,8 +14,13 @@ import android.view.ViewGroup;
 
 import com.caixiaoqing.dribbbee.R;
 import com.caixiaoqing.dribbbee.model.Shot;
+import com.caixiaoqing.dribbbee.view.bucket_list.BucketListFragment;
 import com.caixiaoqing.dribbbee.view.bucket_list.ChooseBucketActivity;
 import com.squareup.picasso.Picasso;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Created by caixiaoqing on 18/12/16.
@@ -24,10 +31,15 @@ class ShotAdapter extends RecyclerView.Adapter{
     private static final int VIEW_TYPE_SHOT_IMAGE = 0;
     private static final int VIEW_TYPE_SHOT_INFO = 1;
 
+    private final ShotFragment shotFragment;
     private final Shot shot;
+    private ArrayList<String> collectedBucketIds;
 
-    public ShotAdapter(@NonNull Shot shot) {
+    public ShotAdapter(@NonNull ShotFragment shotFragment,
+                       @NonNull Shot shot) {
+        this.shotFragment = shotFragment;
         this.shot = shot;
+        this.collectedBucketIds = null;
     }
 
     //TODO when onCreateViewHolder will be called
@@ -72,6 +84,13 @@ class ShotAdapter extends RecyclerView.Adapter{
                 shotDetailViewHolder.likeCount.setText(String.valueOf(shot.likes_count));
                 shotDetailViewHolder.bucketCount.setText(String.valueOf(shot.buckets_count));
                 shotDetailViewHolder.viewCount.setText(String.valueOf(shot.views_count));
+
+                Drawable bucketDrawable = shot.bucketed
+                        ? ContextCompat.getDrawable(shotDetailViewHolder.itemView.getContext(),
+                        R.drawable.ic_inbox_dribbble_18dp)
+                        : ContextCompat.getDrawable(shotDetailViewHolder.itemView.getContext(),
+                        R.drawable.ic_inbox_black_18dp);
+                shotDetailViewHolder.bucketButton.setImageDrawable(bucketDrawable);
 
                 shotDetailViewHolder.shareButton.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -118,8 +137,40 @@ class ShotAdapter extends RecyclerView.Adapter{
     }
 
     private void bucket(Context context) {
+        // collectedBucketIds == null means we're still loading
         Intent intent = new Intent(context, ChooseBucketActivity.class);
-        // TODO: we need to pass in the chosen bucket ids here
-        context.startActivity(intent);
+        intent.putStringArrayListExtra(BucketListFragment.KEY_CHOSEN_BUCKET_IDS,
+                collectedBucketIds);
+        shotFragment.startActivityForResult(intent, ShotFragment.REQ_CODE_BUCKET);
+    }
+
+    public List<String> getReadOnlyCollectedBucketIds() {
+        return Collections.unmodifiableList(collectedBucketIds);
+    }
+
+    public void updateCollectedBucketIds(@NonNull List<String> bucketIds) {
+        if (collectedBucketIds == null) {
+            collectedBucketIds = new ArrayList<>();
+        }
+
+        collectedBucketIds.clear();
+        collectedBucketIds.addAll(bucketIds);
+
+        shot.bucketed = !bucketIds.isEmpty();
+        notifyDataSetChanged();
+    }
+
+    public void updateCollectedBucketIds(@NonNull List<String> addedIds,
+                                         @NonNull List<String> removedIds) {
+        if (collectedBucketIds == null) {
+            collectedBucketIds = new ArrayList<>();
+        }
+
+        collectedBucketIds.addAll(addedIds);
+        collectedBucketIds.removeAll(removedIds);
+
+        shot.bucketed = !collectedBucketIds.isEmpty();
+        shot.buckets_count += addedIds.size() - removedIds.size();
+        notifyDataSetChanged();
     }
 }

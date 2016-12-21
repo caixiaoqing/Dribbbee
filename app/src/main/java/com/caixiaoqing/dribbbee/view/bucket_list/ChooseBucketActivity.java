@@ -17,8 +17,9 @@ public class ChooseBucketActivity extends SingleFragmentActivity {
     @NonNull
     @Override
     protected Fragment newFragment() {
-        // TODO: we need to pass in the chosen bucket ids to BucketListFragment here
-        return BucketListFragment.newInstance(true, new ArrayList<String>());
+        ArrayList<String> chosenBucketIds = getIntent().getStringArrayListExtra(
+                BucketListFragment.KEY_CHOSEN_BUCKET_IDS);
+        return BucketListFragment.newInstance(true, chosenBucketIds);
     }
 
     @NonNull
