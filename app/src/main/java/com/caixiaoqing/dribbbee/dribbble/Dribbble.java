@@ -10,6 +10,7 @@ import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
 
 import com.caixiaoqing.dribbbee.model.Bucket;
+import com.caixiaoqing.dribbbee.model.Like;
 import com.caixiaoqing.dribbbee.model.Shot;
 import com.caixiaoqing.dribbbee.model.User;
 import com.caixiaoqing.dribbbee.utils.ModelUtils;
@@ -19,6 +20,7 @@ import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.ArrayList;
 import java.util.List;
 
 import okhttp3.FormBody;
@@ -55,6 +57,8 @@ public class Dribbble {
     private static final TypeToken<Bucket> BUCKET_TYPE = new TypeToken<Bucket>(){};
     private static final TypeToken<List<Shot>> SHOT_LIST_TYPE = new TypeToken<List<Shot>>(){};
     private static final TypeToken<User> USER_TYPE = new TypeToken<User>(){};
+    private static final TypeToken<List<Like>> LIKE_LIST_TYPE = new TypeToken<List<Like>>(){};
+    private static final TypeToken<Like> LIKE_TYPE = new TypeToken<Like>(){};
 
     private static OkHttpClient client = new OkHttpClient();
 
@@ -280,5 +284,40 @@ public class Dribbble {
 
         Response response = makeDeleteRequest(url, formBody);
         checkStatusCode(response, HttpURLConnection.HTTP_NO_CONTENT);
+    }
+
+    //Note <List shot likes for a user> doesn't work with page
+    public static List<Shot> getUserLikes(int page) throws IOException, JsonSyntaxException{
+        return getUserLikes();
+    }
+
+    public static List<Shot> getUserLikes() throws IOException, JsonSyntaxException{
+        String url = USER_END_POINT + "/" + "likes";
+        List<Like> likes = parseResponse(makeGetRequest(url), LIKE_LIST_TYPE);
+        List<Shot> shots = new ArrayList<Shot>();
+        for(Like l : likes){
+            l.shot.like_id = l.id;
+            shots.add(l.shot);
+        }
+        return shots;
+    }
+
+    public static Like addLikeShot(String shotId) throws IOException, JsonSyntaxException{
+        String url = SHOTS_END_POINT + "/" + shotId + "/like";
+        FormBody formBody = new FormBody.Builder().build();
+        return parseResponse(makePostRequest(url, formBody), LIKE_TYPE);
+    }
+
+    public static void removeLikeShot(String shotId) throws IOException, JsonSyntaxException{
+        String url = SHOTS_END_POINT + "/" + shotId + "/like";
+        FormBody formBody = new FormBody.Builder().build();
+        Response response = makeDeleteRequest(url, formBody);
+        checkStatusCode(response, HttpURLConnection.HTTP_NO_CONTENT);
+    }
+
+    //Note <List shots for a bucket> doesn't work with page
+    public static List<Shot> getBucketShots(String bucketId, int page) throws IOException, JsonSyntaxException{
+        String url = BUCKETS_END_POINT + "/" + bucketId + "/shots";  //?per_page=" + page;
+        return parseResponse(makeGetRequest(url), SHOT_LIST_TYPE);
     }
 }

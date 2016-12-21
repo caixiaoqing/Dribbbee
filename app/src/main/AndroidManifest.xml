@@ -31,7 +31,7 @@
 
         <activity android:name=".view.shot_detail.ShotActivity"/>
         <activity android:name=".view.bucket_list.ChooseBucketActivity"/>
-
+        <activity android:name=".view.shot_list.BucketOpenListActivity"/>
     </application>
 
 </manifest>

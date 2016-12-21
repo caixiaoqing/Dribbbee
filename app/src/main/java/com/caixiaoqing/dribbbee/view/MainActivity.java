@@ -1,5 +1,6 @@
 package com.caixiaoqing.dribbbee.view;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.support.design.widget.NavigationView;
@@ -13,10 +14,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.caixiaoqing.dribbbee.R;
 import com.caixiaoqing.dribbbee.dribbble.Dribbble;
 import com.caixiaoqing.dribbbee.view.bucket_list.BucketListFragment;
+import com.caixiaoqing.dribbbee.view.shot_detail.ShotFragment;
 import com.caixiaoqing.dribbbee.view.shot_list.ShotListFragment;
 import com.squareup.picasso.Picasso;
 
@@ -44,9 +47,10 @@ public class MainActivity extends AppCompatActivity {
         setupDrawer();
 
         if (savedInstanceState == null) {
+            boolean isLikingFragment = true;
             getSupportFragmentManager()
                     .beginTransaction()
-                    .add(R.id.fragment_container, ShotListFragment.newInstance())
+                    .add(R.id.fragment_container, ShotListFragment.newInstance(!isLikingFragment, ""))
                     .commit();
         }
     }
@@ -92,13 +96,14 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 Fragment fragment = null;
+                boolean isLikingFragment = true;
                 switch (item.getItemId()) {
                     case R.id.drawer_item_home:
-                        fragment = ShotListFragment.newInstance();
+                        fragment = ShotListFragment.newInstance(!isLikingFragment, "");
                         setTitle(R.string.title_home);
                         break;
                     case R.id.drawer_item_likes:
-                        fragment = ShotListFragment.newInstance();
+                        fragment = ShotListFragment.newInstance(isLikingFragment, "");
                         setTitle(R.string.title_likes);
                         break;
                     case R.id.drawer_item_buckets:

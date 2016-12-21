@@ -40,12 +40,15 @@ import butterknife.ButterKnife;
 public class BucketListFragment extends Fragment {
 
     public static final int REQ_CODE_NEW_BUCKET = 100;
+    public static final int REQ_CODE_OPEN_BUCKET = 101;
 
     @BindView(R.id.recycler_view) RecyclerView recyclerView;
     @BindView(R.id.fab) FloatingActionButton fab;
 
     public static final String KEY_CHOOSING_MODE = "choose_mode";
     public static final String KEY_CHOSEN_BUCKET_IDS = "chosen_bucket_ids";
+    public static final String KEY_BUCKET_ID = "bucket_id";
+    public static final String KEY_BUCKET_NAME = "bucket_name";
 
     BucketListAdapter adapter;
     private boolean isChoosingMode;
@@ -93,7 +96,10 @@ public class BucketListFragment extends Fragment {
         recyclerView.addItemDecoration(new SpaceItemDecoration(
                 getResources().getDimensionPixelSize(R.dimen.spacing_medium)));
 
-        adapter = new BucketListAdapter(new ArrayList<Bucket>(), new BucketListAdapter.LoadMoreListener() {
+        //Bucket 3.1 : load User's bucket
+        adapter = new BucketListAdapter(this,
+                new ArrayList<Bucket>(),
+                new BucketListAdapter.LoadMoreListener() {
             @Override
             public void onLoadMore() {
                 AsyncTaskCompat.executeParallel(
@@ -102,6 +108,7 @@ public class BucketListFragment extends Fragment {
         }, isChoosingMode);
         recyclerView.setAdapter(adapter);
 
+        //Bucket 3.2 : create User's bucket
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -177,6 +184,7 @@ public class BucketListFragment extends Fragment {
                 }
 
                 adapter.append(buckets);
+                //Bucket 3.3 : stop loading User's bucket
                 adapter.setShowLoading(buckets.size() == Dribbble.COUNT_PER_PAGE);
             } else {
                 Snackbar.make(getView(), "Error!", Snackbar.LENGTH_LONG).show();
@@ -214,4 +222,5 @@ public class BucketListFragment extends Fragment {
             }
         }
     }
+
 }

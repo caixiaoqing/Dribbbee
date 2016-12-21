@@ -10,6 +10,7 @@ import android.support.v4.os.AsyncTaskCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,6 +21,7 @@ import com.caixiaoqing.dribbbee.dribbble.Dribbble;
 import com.caixiaoqing.dribbbee.model.Shot;
 import com.caixiaoqing.dribbbee.model.User;
 import com.caixiaoqing.dribbbee.view.base.SpaceItemDecoration;
+import com.caixiaoqing.dribbbee.view.bucket_list.BucketListFragment;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -34,12 +36,22 @@ import butterknife.ButterKnife;
  */
 
 public class ShotListFragment extends Fragment {
+    private static final String KEY_LIKING_MODE = "liking_mode";
+    private static final String KEY_BUCKET_ID = "bucket_id";
     @BindView(R.id.recycler_view) RecyclerView recyclerView;
 
     private ShotListAdapter adapter;
+    private boolean isLikingMode;
+    private String bucketId;
 
-    public static ShotListFragment newInstance() {
-        return new ShotListFragment();
+    public static ShotListFragment newInstance(boolean isLikingMode, String bucketId) {
+        Bundle args = new Bundle();
+        args.putBoolean(KEY_LIKING_MODE, isLikingMode);
+        args.putString(KEY_BUCKET_ID, bucketId);
+
+        ShotListFragment fragment = new ShotListFragment();
+        fragment.setArguments(args);
+        return fragment;
     }
 
     @Nullable
@@ -54,20 +66,31 @@ public class ShotListFragment extends Fragment {
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        isLikingMode = getArguments().getBoolean(KEY_LIKING_MODE);
+        bucketId = getArguments().getString(KEY_BUCKET_ID);
+
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.addItemDecoration(new SpaceItemDecoration(
                getResources().getDimensionPixelSize(R.dimen.spacing_medium)));
 
         //Data flow 1: ShotListFragment(generate data list) -> ShotListAdapter()
-        final Handler handler = new Handler();
-
         //Infinite loading list 5: load shot + load More
+
         adapter = new ShotListAdapter(new ArrayList<Shot>(), new ShotListAdapter.LoadMoreListener() {
             @Override
             public void onLoadMore() {
                 // this method will be called when the RecyclerView is displayed
                 // page starts from 1
-                AsyncTaskCompat.executeParallel(new LoadShotTask(adapter.getDataCount() / Dribbble.COUNT_PER_PAGE + 1));
+                if (!isLikingMode && bucketId.isEmpty()) {
+                    AsyncTaskCompat.executeParallel(new LoadShotTask(adapter.getDataCount() / Dribbble.COUNT_PER_PAGE + 1));
+                }
+                else if(isLikingMode){
+                    AsyncTaskCompat.executeParallel(new LoadUserLikesTask(adapter.getDataCount() / Dribbble.COUNT_PER_PAGE + 1));
+                }
+                else {
+                    AsyncTaskCompat.executeParallel(new LoadBucketTask(bucketId, adapter.getDataCount() / Dribbble.COUNT_PER_PAGE + 1));
+                }
+
             }
         });
         recyclerView.setAdapter(adapter);
@@ -95,6 +118,76 @@ public class ShotListFragment extends Fragment {
         protected void onPostExecute(List<Shot> shots) {
             if (shots != null) {
                 adapter.append(shots);
+            } else {
+                Snackbar.make(getView(), "Error!", Snackbar.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    private class LoadUserLikesTask extends AsyncTask<Void, Void, List<Shot>> {
+
+        int page;
+
+        public LoadUserLikesTask(int page) {
+            this.page = page;
+        }
+
+        @Override
+        protected List<Shot> doInBackground(Void... params) {
+            try {
+                return Dribbble.getUserLikes(page);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(List<Shot> shots) {
+            if (shots != null) {
+                for(Shot s : shots) {
+                    s.liked = true;
+                }
+                adapter.append(shots);
+                adapter.setShowLoading(shots.size() == Dribbble.COUNT_PER_PAGE);
+            } else {
+                Snackbar.make(getView(), "Error!", Snackbar.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    private class LoadBucketTask extends AsyncTask<Void, Void, List<Shot>> {
+
+        String bucketId;
+        int page;
+
+        public LoadBucketTask(String bucketId, int page) {
+            this.bucketId = bucketId;
+            this.page = page;
+        }
+
+        @Override
+        protected List<Shot> doInBackground(Void... params) {
+            try {
+                return Dribbble.getBucketShots(bucketId, page);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(List<Shot> shots) {
+            if (shots != null) {
+                Log.i("open bucket", String.valueOf(shots.size()));
+                Log.i("open bucket", String.valueOf(shots.size()));
+                Log.i("open bucket", String.valueOf(shots.size()));
+                Log.i("open bucket", String.valueOf(shots.size()));
+                Log.i("open bucket", String.valueOf(shots.size()));
+                Log.i("open bucket", String.valueOf(shots.size()));
+                Log.i("open bucket", String.valueOf(shots.size()));
+                adapter.append(shots);
+                adapter.setShowLoading(shots.size() == Dribbble.COUNT_PER_PAGE);
             } else {
                 Snackbar.make(getView(), "Error!", Snackbar.LENGTH_LONG).show();
             }

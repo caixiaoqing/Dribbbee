@@ -1,6 +1,7 @@
 package com.caixiaoqing.dribbbee.view.bucket_list;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
@@ -10,6 +11,7 @@ import android.view.ViewGroup;
 
 import com.caixiaoqing.dribbbee.R;
 import com.caixiaoqing.dribbbee.model.Bucket;
+import com.caixiaoqing.dribbbee.view.shot_list.BucketOpenListActivity;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -29,9 +31,13 @@ public class BucketListAdapter extends RecyclerView.Adapter {
     private boolean isChoosingMode;
     private boolean showLoading;
 
-    public BucketListAdapter(@NonNull List<Bucket> data,
+    private final BucketListFragment bucketListFragment;
+
+    public BucketListAdapter(@NonNull BucketListFragment fragment,
+                             @NonNull List<Bucket> data,
                              @NonNull LoadMoreListener loadMoreListener,
                              boolean isChoosingMode) {
+        this.bucketListFragment = fragment;
         this.data = data;
         this.loadMoreListener = loadMoreListener;
         this.isChoosingMode = isChoosingMode;
@@ -97,9 +103,10 @@ public class BucketListAdapter extends RecyclerView.Adapter {
                 bucketViewHolder.bucketLayout.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        //TODO
-                        // if not in choosing mode, we need to open a new Activity to show
-                        // what shots are in this bucket, we will need ShotListFragment here!
+                        Intent intent = new Intent(v.getContext(), BucketOpenListActivity.class);
+                        intent.putExtra(BucketListFragment.KEY_BUCKET_ID, bucket.id);
+                        intent.putExtra(BucketListFragment.KEY_BUCKET_NAME, bucket.name);
+                        bucketListFragment.startActivityForResult(intent, BucketListFragment.REQ_CODE_OPEN_BUCKET);
                     }
                 });
             }

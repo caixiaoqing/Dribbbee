@@ -32,6 +32,7 @@ public class Shot {
     public User user;
 
     public boolean liked;
+    public String like_id;
     public boolean bucketed;
 
     @Nullable

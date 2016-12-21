@@ -14,6 +14,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.caixiaoqing.dribbbee.R;
 import com.caixiaoqing.dribbbee.dribbble.Dribbble;
@@ -26,8 +27,10 @@ import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import butterknife.BindView;
@@ -40,7 +43,11 @@ import butterknife.ButterKnife;
 public class ShotFragment extends Fragment {
 
     public static final String KEY_SHOT = "shot";
+    public static final String KEY_LIKE_ID = "like_id";
+    public static final String KEY_IS_LIKED = "is_liked";
+
     public static final int REQ_CODE_BUCKET = 100;
+    public static final int REQ_CODE_LIKE = 101;
 
     @BindView(R.id.recycler_view)
     RecyclerView recyclerView;
@@ -74,11 +81,15 @@ public class ShotFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(adapter);
 
+        //Bucket 2.3 : to load buckets => so ShotAdapter know if it should be bucketed or not
         AsyncTaskCompat.executeParallel(new LoadCollectedBucketIdsTask());
+
+        AsyncTaskCompat.executeParallel(new LoadLikeIdsTask());
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        //Bucket 2.2 : to add/delete bucket
         if (requestCode == REQ_CODE_BUCKET && resultCode == Activity.RESULT_OK) {
             List<String> chosenBucketIds = data.getStringArrayListExtra(BucketListFragment.KEY_CHOSEN_BUCKET_IDS);
             List<String> addedBucketIds = new ArrayList<>();
@@ -134,6 +145,29 @@ public class ShotFragment extends Fragment {
         }
     }
 
+    private class LoadLikeIdsTask extends AsyncTask<Void, Void, Map<String, String>> {
+
+        @Override
+        protected Map<String, String> doInBackground(Void... params) {
+            try {
+                List<Shot> likes = Dribbble.getUserLikes();
+                Map<String, String> likeIds = new HashMap<String, String>();
+                for(Shot s: likes){
+                    likeIds.put(s.id, s.like_id);
+                }
+                return likeIds;
+            } catch (IOException | JsonSyntaxException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(Map<String, String> likeIds) {
+            adapter.updateLikeIdsFromLoading(likeIds);
+        }
+    }
+
     private class UpdateBucketTask extends AsyncTask<Void, Void, Void> {
 
         private List<String> added;
@@ -172,4 +206,5 @@ public class ShotFragment extends Fragment {
             }
         }
     }
+
 }
