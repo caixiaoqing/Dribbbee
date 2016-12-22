@@ -47,10 +47,11 @@ public class MainActivity extends AppCompatActivity {
         setupDrawer();
 
         if (savedInstanceState == null) {
-            boolean isLikingFragment = true;
+            ShotListFragment shotListFragment = ShotListFragment.newInstance(
+                    ShotListFragment.LIST_TYPE_POPULAR);
             getSupportFragmentManager()
                     .beginTransaction()
-                    .add(R.id.fragment_container, ShotListFragment.newInstance(!isLikingFragment, ""))
+                    .add(R.id.fragment_container, shotListFragment)
                     .commit();
         }
     }
@@ -85,6 +86,7 @@ public class MainActivity extends AppCompatActivity {
 
         drawerLayout.setDrawerListener(drawerToggle);
 
+        // dynamically set header, the header is not specified in main_activity.xml layout
         setupNavHeader();
 
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
@@ -99,15 +101,17 @@ public class MainActivity extends AppCompatActivity {
                 boolean isLikingFragment = true;
                 switch (item.getItemId()) {
                     case R.id.drawer_item_home:
-                        fragment = ShotListFragment.newInstance(!isLikingFragment, "");
+                        fragment = ShotListFragment.newInstance(ShotListFragment.LIST_TYPE_POPULAR);
                         setTitle(R.string.title_home);
                         break;
                     case R.id.drawer_item_likes:
-                        fragment = ShotListFragment.newInstance(isLikingFragment, "");
+                        fragment = ShotListFragment.newInstance(ShotListFragment.LIST_TYPE_LIKED);
                         setTitle(R.string.title_likes);
                         break;
                     case R.id.drawer_item_buckets:
-                        fragment = BucketListFragment.newInstance(false, null);
+                        fragment = BucketListFragment.newInstance(/* userId */null,
+                                                                /* isChoosingMode */false,
+                                                                /* chosenBucketIds */null);
                         setTitle(R.string.title_buckets);
                         break;
                 }
@@ -128,7 +132,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupNavHeader() {
-        View headerView = navigationView.getHeaderView(0);
+        //View headerView = navigationView.getHeaderView(0);
+        View headerView = navigationView.inflateHeaderView(R.layout.nav_header);
 
         ((TextView) headerView.findViewById(R.id.nav_header_user_name)).setText(
                 Dribbble.getCurrentUser().name);

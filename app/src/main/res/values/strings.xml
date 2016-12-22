@@ -30,7 +30,11 @@
 
     <string name="share_shot">Share this amazing shot!</string>
 
+    <!--TODO delete shot_count-->
     <string name="shot_count">{0,choice,0#0 shot|1#1 shot|1&lt;{0} shots}</string>
+    <string name="shot_count_single">%1$d shot</string>
+    <string name="shot_count_plural">%1$d shots</string>
+
     <string name="shot_detail_loading_buckets">Loading buckets, just one second…</string>
     <string name="new_bucket_name">Bucket name</string>
     <string name="new_bucket_description">Bucket description</string>

@@ -11,6 +11,7 @@ import com.caixiaoqing.dribbbee.R;
 import com.caixiaoqing.dribbbee.dribbble.Dribbble;
 import com.caixiaoqing.dribbbee.dribbble.auth.Auth;
 import com.caixiaoqing.dribbbee.dribbble.auth.AuthActivity;
+import com.caixiaoqing.dribbbee.view.base.DribbbeeException;
 import com.google.gson.JsonSyntaxException;
 
 import java.io.IOException;
@@ -68,7 +69,7 @@ public class LoginActivity extends AppCompatActivity {
                         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
                         startActivity(intent);
                         finish();
-                    } catch (IOException | JsonSyntaxException e) {
+                    } catch (IOException | DribbbeeException e) {
                         e.printStackTrace();
                     }
                 }

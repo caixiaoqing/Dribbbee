@@ -6,6 +6,7 @@ import android.widget.TextView;
 
 import com.caixiaoqing.dribbbee.R;
 import com.caixiaoqing.dribbbee.view.base.BaseViewHolder;
+import com.facebook.drawee.view.SimpleDraweeView;
 
 import butterknife.BindView;
 
@@ -18,7 +19,8 @@ public class ShotViewHolder extends BaseViewHolder {
     @BindView(R.id.shot_like_count) public TextView likeCount;
     @BindView(R.id.shot_bucket_count) public TextView bucketCount;
     @BindView(R.id.shot_view_count) public TextView viewCount;
-    @BindView(R.id.shot_image) public ImageView image;
+    //@BindView(R.id.shot_image) public ImageView image;
+    @BindView(R.id.shot_image) public SimpleDraweeView image;
 
     public ShotViewHolder(View itemView) {
         super(itemView);

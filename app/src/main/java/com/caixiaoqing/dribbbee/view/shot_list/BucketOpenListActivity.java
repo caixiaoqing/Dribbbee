@@ -22,7 +22,7 @@ public class BucketOpenListActivity extends SingleFragmentActivity {
         String id = getIntent().getStringExtra(BucketListFragment.KEY_BUCKET_ID);
         String name = getIntent().getStringExtra(BucketListFragment.KEY_BUCKET_NAME);
 
-        Fragment fragment = ShotListFragment.newInstance(isLikingFragment, id);
+        Fragment fragment = ShotListFragment.newBucketListInstance(id); //ShotListFragment.newInstance(isLikingFragment, id);
         setTitle(name);
         return fragment;
     }

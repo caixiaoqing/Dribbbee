@@ -15,6 +15,7 @@ import com.caixiaoqing.dribbbee.model.Shot;
 import com.caixiaoqing.dribbbee.model.User;
 import com.caixiaoqing.dribbbee.utils.ModelUtils;
 import com.caixiaoqing.dribbbee.view.LoginActivity;
+import com.caixiaoqing.dribbbee.view.base.DribbbeeException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
@@ -34,31 +35,33 @@ import okhttp3.Response;
  */
 
 public class Dribbble {
+
     private static final String TAG = "Dribbble API";
 
-    // Dribbble loads everything in a 12-per-page manner
-    public static final int COUNT_PER_PAGE = 12;
+    public static final int COUNT_PER_LOAD = 12;
 
     private static final String API_URL = "https://api.dribbble.com/v1/";
 
-    private static final String SHOTS_END_POINT = API_URL + "shots";
     private static final String USER_END_POINT = API_URL + "user";
+    private static final String USERS_END_POINT = API_URL + "users";
+    private static final String SHOTS_END_POINT = API_URL + "shots";
     private static final String BUCKETS_END_POINT = API_URL + "buckets";
 
     private static final String SP_AUTH = "auth";
 
     private static final String KEY_ACCESS_TOKEN = "access_token";
-    private static final String KEY_USER = "user";
     private static final String KEY_DESCRIPTION = "description";
     private static final String KEY_NAME = "name";
     private static final String KEY_SHOT_ID = "shot_id";
+    private static final String KEY_USER = "user";
 
-    private static final TypeToken<List<Bucket>> BUCKET_LIST_TYPE = new TypeToken<List<Bucket>>(){};
-    private static final TypeToken<Bucket> BUCKET_TYPE = new TypeToken<Bucket>(){};
-    private static final TypeToken<List<Shot>> SHOT_LIST_TYPE = new TypeToken<List<Shot>>(){};
     private static final TypeToken<User> USER_TYPE = new TypeToken<User>(){};
-    private static final TypeToken<List<Like>> LIKE_LIST_TYPE = new TypeToken<List<Like>>(){};
+    private static final TypeToken<Shot> SHOT_TYPE = new TypeToken<Shot>(){};
+    private static final TypeToken<List<Shot>> SHOT_LIST_TYPE = new TypeToken<List<Shot>>(){};
+    private static final TypeToken<Bucket> BUCKET_TYPE = new TypeToken<Bucket>(){};
+    private static final TypeToken<List<Bucket>> BUCKET_LIST_TYPE = new TypeToken<List<Bucket>>(){};
     private static final TypeToken<Like> LIKE_TYPE = new TypeToken<Like>(){};
+    private static final TypeToken<List<Like>> LIKE_LIST_TYPE = new TypeToken<List<Like>>(){};
 
     private static OkHttpClient client = new OkHttpClient();
 
@@ -71,19 +74,23 @@ public class Dribbble {
                 .url(url);
     }
 
-    private static Response makeRequest(Request request) throws IOException {
-        Response response = client.newCall(request).execute();
-        Log.d(TAG, response.header("X-RateLimit-Remaining"));
-        return response;
+    private static Response makeRequest(Request request) throws DribbbeeException {
+        try {
+            Response response = client.newCall(request).execute();
+            Log.d(TAG, response.header("X-RateLimit-Remaining"));
+            return response;
+        } catch (IOException e) {
+            throw new DribbbeeException(e.getMessage());
+        }
     }
 
-    private static Response makeGetRequest(String url) throws IOException {
+    private static Response makeGetRequest(String url) throws DribbbeeException {
         Request request = authRequestBuilder(url).build();
         return makeRequest(request);
     }
 
     private static Response makePostRequest(String url,
-                                            RequestBody requestBody) throws IOException {
+                                            RequestBody requestBody) throws DribbbeeException {
         Request request = authRequestBuilder(url)
                 .post(requestBody)
                 .build();
@@ -91,15 +98,22 @@ public class Dribbble {
     }
 
     private static Response makePutRequest(String url,
-                                           RequestBody requestBody) throws IOException {
+                                           RequestBody requestBody) throws DribbbeeException {
         Request request = authRequestBuilder(url)
                 .put(requestBody)
                 .build();
         return makeRequest(request);
     }
 
+    private static Response makeDeleteRequest(String url) throws DribbbeeException {
+        Request request = authRequestBuilder(url)
+                .delete()
+                .build();
+        return makeRequest(request);
+    }
+
     private static Response makeDeleteRequest(String url,
-                                              RequestBody requestBody) throws IOException {
+                                              RequestBody requestBody) throws DribbbeeException {
         Request request = authRequestBuilder(url)
                 .delete(requestBody)
                 .build();
@@ -107,16 +121,27 @@ public class Dribbble {
     }
 
     private static <T> T parseResponse(Response response,
-                                       TypeToken<T> typeToken) throws IOException, JsonSyntaxException {
-        String responseString = response.body().string();
+                                       TypeToken<T> typeToken) throws DribbbeeException {
+        String responseString;
+        try {
+            responseString = response.body().string();
+        } catch (IOException e) {
+            throw new DribbbeeException(e.getMessage());
+        }
+
         Log.d(TAG, responseString);
-        return ModelUtils.toObject(responseString, typeToken);
+
+        try {
+            return ModelUtils.toObject(responseString, typeToken);
+        } catch (JsonSyntaxException e) {
+            throw new DribbbeeException(responseString);
+        }
     }
 
     private static void checkStatusCode(Response response,
-                                        int statusCode) throws IOException {
+                                        int statusCode) throws DribbbeeException {
         if (response.code() != statusCode) {
-            throw new IOException(response.message());
+            throw new DribbbeeException(response.message());
         }
     }
 
@@ -132,7 +157,7 @@ public class Dribbble {
     }
 
     public static void login(@NonNull Context context,
-                             @NonNull String accessToken) throws IOException, JsonSyntaxException {
+                             @NonNull String accessToken) throws DribbbeeException {
         Dribbble.accessToken = accessToken;
         storeAccessToken(context, accessToken);
 
@@ -146,50 +171,142 @@ public class Dribbble {
 
         accessToken = null;
         user = null;
-
-        Dribbble.clearCookies(context);
-    }
-
-    @SuppressWarnings("deprecation")
-    public static void clearCookies(Context context)
-    {
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-            //Log.d(C.TAG, "Using clearCookies code for API >=" + String.valueOf(Build.VERSION_CODES.LOLLIPOP_MR1));
-            CookieManager.getInstance().removeAllCookies(null);
-            CookieManager.getInstance().flush();
-        } else
-        {
-            //Log.d(C.TAG, "Using clearCookies code for API <" + String.valueOf(Build.VERSION_CODES.LOLLIPOP_MR1));
-            CookieSyncManager cookieSyncMngr=CookieSyncManager.createInstance(context);
-            cookieSyncMngr.startSync();
-            CookieManager cookieManager=CookieManager.getInstance();
-            cookieManager.removeAllCookie();
-            cookieManager.removeSessionCookie();
-            cookieSyncMngr.stopSync();
-            cookieSyncMngr.sync();
-        }
-    }
-
-    ////TODO crash
-    public static void clearCookiesDomain(String domain, Context context) {
-        CookieSyncManager.createInstance(context);
-        CookieManager cookieManager = CookieManager.getInstance();
-        String cookiestring = cookieManager.getCookie(domain);
-        String[] cookies =  cookiestring.split(";");
-        for (int i=0; i<cookies.length; i++) {
-            String[] cookieparts = cookies[i].split("=");
-            cookieManager.setCookie(domain, cookieparts[0].trim()+"=; Expires=Wed, 31 Dec 2025 23:59:59 GMT");
-        }
-        CookieSyncManager.getInstance().sync();
-    }
-
-    public static User getUser() throws IOException, JsonSyntaxException {
-        return parseResponse(makeGetRequest(USER_END_POINT), USER_TYPE);
     }
 
     public static User getCurrentUser() {
         return user;
+    }
+
+    public static User getUser() throws DribbbeeException {
+        return parseResponse(makeGetRequest(USER_END_POINT), USER_TYPE);
+    }
+
+    public static List<Like> getLikes(int page) throws DribbbeeException {
+        String url = USER_END_POINT + "/likes?page=" + page;
+        return parseResponse(makeGetRequest(url), LIKE_LIST_TYPE);
+    }
+
+    public static List<Shot> getLikedShots(int page) throws DribbbeeException {
+        List<Like> likes = getLikes(page);
+        List<Shot> likedShots = new ArrayList<>();
+        for (Like like : likes) {
+            likedShots.add(like.shot);
+        }
+        return likedShots;
+    }
+
+    public static List<Shot> getShots(int page) throws DribbbeeException {
+        String url = SHOTS_END_POINT + "?page=" + page;
+        return parseResponse(makeGetRequest(url), SHOT_LIST_TYPE);
+    }
+
+    public static Shot getShot(@NonNull String id) throws DribbbeeException {
+        String url = SHOTS_END_POINT + "/" + id;
+        return parseResponse(makeGetRequest(url), SHOT_TYPE);
+    }
+
+    public static Like likeShot(@NonNull String id) throws DribbbeeException {
+        String url = SHOTS_END_POINT + "/" + id + "/like";
+        Response response = makePostRequest(url, new FormBody.Builder().build());
+
+        checkStatusCode(response, HttpURLConnection.HTTP_CREATED);
+
+        return parseResponse(response, LIKE_TYPE);
+    }
+
+    public static void unlikeShot(@NonNull String id) throws DribbbeeException {
+        String url = SHOTS_END_POINT + "/" + id + "/like";
+        Response response = makeDeleteRequest(url);
+        checkStatusCode(response, HttpURLConnection.HTTP_NO_CONTENT);
+    }
+
+    public static boolean isLikingShot(@NonNull String id) throws DribbbeeException {
+        String url = SHOTS_END_POINT + "/" + id + "/like";
+        Response response = makeGetRequest(url);
+        switch (response.code()) {
+            case HttpURLConnection.HTTP_OK:
+                return true;
+            case HttpURLConnection.HTTP_NOT_FOUND:
+                return false;
+            default:
+                throw new DribbbeeException(response.message());
+        }
+    }
+
+    public static List<Bucket> getUserBuckets(int page) throws DribbbeeException {
+        String url = USER_END_POINT + "/" + "buckets?page=" + page;
+        return parseResponse(makeGetRequest(url), BUCKET_LIST_TYPE);
+    }
+
+    /**
+     * Will return all the buckets for the logged in user
+     * @return
+     * @throws DribbbeeException
+     */
+    public static List<Bucket> getUserBuckets() throws DribbbeeException {
+        String url = USER_END_POINT + "/" + "buckets?per_page=" + Integer.MAX_VALUE;
+        return parseResponse(makeGetRequest(url), BUCKET_LIST_TYPE);
+    }
+
+    public static List<Bucket> getUserBuckets(@NonNull String userId,
+                                              int page) throws DribbbeeException {
+        String url = USERS_END_POINT + "/" + userId + "/buckets?page=" + page;
+        return parseResponse(makeGetRequest(url), BUCKET_LIST_TYPE);
+    }
+
+    public static List<Bucket> getShotBuckets(@NonNull String shotId,
+                                              int page) throws DribbbeeException {
+        String url = SHOTS_END_POINT + "/" + shotId + "/buckets?page=" + page;
+        return parseResponse(makeGetRequest(url), BUCKET_LIST_TYPE);
+    }
+
+    /**
+     * Will return all the buckets for a certain shot
+     * @param shotId
+     * @return
+     * @throws DribbbeeException
+     */
+    public static List<Bucket> getShotBuckets(@NonNull String shotId) throws DribbbeeException {
+        String url = SHOTS_END_POINT + "/" + shotId + "/buckets?per_page=" + Integer.MAX_VALUE;
+        return parseResponse(makeGetRequest(url), BUCKET_LIST_TYPE);
+    }
+
+    public static Bucket newBucket(@NonNull String name,
+                                   @NonNull String description) throws DribbbeeException {
+        FormBody formBody = new FormBody.Builder()
+                .add(KEY_NAME, name)
+                .add(KEY_DESCRIPTION, description)
+                .build();
+        return parseResponse(makePostRequest(BUCKETS_END_POINT, formBody), BUCKET_TYPE);
+    }
+
+    public static void addBucketShot(@NonNull String bucketId,
+                                     @NonNull String shotId) throws DribbbeeException {
+        String url = BUCKETS_END_POINT + "/" + bucketId + "/shots";
+        FormBody formBody = new FormBody.Builder()
+                .add(KEY_SHOT_ID, shotId)
+                .build();
+
+        Response response = makePutRequest(url, formBody);
+        checkStatusCode(response, HttpURLConnection.HTTP_NO_CONTENT);
+    }
+
+    public static void removeBucketShot(@NonNull String bucketId,
+                                        @NonNull String shotId) throws DribbbeeException {
+        String url = BUCKETS_END_POINT + "/" + bucketId + "/shots";
+        FormBody formBody = new FormBody.Builder()
+                .add(KEY_SHOT_ID, shotId)
+                .build();
+
+        Response response = makeDeleteRequest(url, formBody);
+        checkStatusCode(response, HttpURLConnection.HTTP_NO_CONTENT);
+    }
+
+    //Note <List shots for a bucket> doesn't work with page  TODO test again
+    public static List<Shot> getBucketShots(@NonNull String bucketId,
+                                            int page) throws DribbbeeException {
+        String url = BUCKETS_END_POINT + "/" + bucketId + "/shots"; //"?per_page=" + page;
+        return parseResponse(makeGetRequest(url), SHOT_LIST_TYPE);
     }
 
     public static void storeAccessToken(@NonNull Context context, @Nullable String token) {
@@ -212,112 +329,4 @@ public class Dribbble {
         return ModelUtils.read(context, KEY_USER, new TypeToken<User>(){});
     }
 
-    public static List<Shot> getShots(int page) throws IOException, JsonSyntaxException {
-        String url = SHOTS_END_POINT + "?page=" + page;
-        return parseResponse(makeGetRequest(url), SHOT_LIST_TYPE);
-    }
-
-    public static List<Bucket> getUserBuckets(int page) throws IOException, JsonSyntaxException {
-        String url = USER_END_POINT + "/" + "buckets?page=" + page;
-        return parseResponse(makeGetRequest(url), BUCKET_LIST_TYPE);
-    }
-
-    /**
-     * @return All the buckets for the logged in user
-     * @throws IOException, JsonSyntaxException
-     */
-    public static List<Bucket> getUserBuckets() throws IOException, JsonSyntaxException {
-        String url = USER_END_POINT + "/" + "buckets?per_page=" + Integer.MAX_VALUE;
-        return parseResponse(makeGetRequest(url), BUCKET_LIST_TYPE);
-    }
-
-    /**
-     * @param shotId
-     * @return All the buckets which a certain shot has been put into
-     * @throws IOException, JsonSyntaxException
-     */
-    public static List<Bucket> getShotBuckets(@NonNull String shotId) throws IOException, JsonSyntaxException {
-        String url = SHOTS_END_POINT + "/" + shotId + "/buckets?per_page=" + Integer.MAX_VALUE;
-        return parseResponse(makeGetRequest(url), BUCKET_LIST_TYPE);
-    }
-
-    public static Bucket newBucket(@NonNull String name,
-                                   @NonNull String description) throws IOException, JsonSyntaxException {
-        FormBody formBody = new FormBody.Builder()
-                .add(KEY_NAME, name)
-                .add(KEY_DESCRIPTION, description)
-                .build();
-        return parseResponse(makePostRequest(BUCKETS_END_POINT, formBody), BUCKET_TYPE);
-    }
-
-    /**
-     * Add a shot to a bucket
-     * @param bucketId
-     * @param shotId
-     * @throws IOException
-     * @throws JsonSyntaxException
-     */
-    public static void addBucketShot(@NonNull String bucketId,
-                                     @NonNull String shotId) throws IOException, JsonSyntaxException {
-        String url = BUCKETS_END_POINT + "/" + bucketId + "/shots";
-        FormBody formBody = new FormBody.Builder()
-                .add(KEY_SHOT_ID, shotId)
-                .build();
-
-        Response response = makePutRequest(url, formBody);
-        checkStatusCode(response, HttpURLConnection.HTTP_NO_CONTENT);
-    }
-
-    /**
-     * Remove a shot from a bucket
-     * @param bucketId
-     * @param shotId
-     * @throws IOException
-     * @throws JsonSyntaxException
-     */
-    public static void removeBucketShot(@NonNull String bucketId,
-                                        @NonNull String shotId) throws IOException, JsonSyntaxException {
-        String url = BUCKETS_END_POINT + "/" + bucketId + "/shots";
-        FormBody formBody = new FormBody.Builder()
-                .add(KEY_SHOT_ID, shotId)
-                .build();
-
-        Response response = makeDeleteRequest(url, formBody);
-        checkStatusCode(response, HttpURLConnection.HTTP_NO_CONTENT);
-    }
-
-    //Note <List shot likes for a user> doesn't work with page
-    public static List<Shot> getUserLikes(int page) throws IOException, JsonSyntaxException{
-        return getUserLikes();
-    }
-
-    public static List<Shot> getUserLikes() throws IOException, JsonSyntaxException{
-        String url = USER_END_POINT + "/" + "likes";
-        List<Like> likes = parseResponse(makeGetRequest(url), LIKE_LIST_TYPE);
-        List<Shot> shots = new ArrayList<Shot>();
-        for(Like l : likes){
-            l.shot.like_id = l.id;
-            shots.add(l.shot);
-        }
-        return shots;
-    }
-
-    public static Like addLikeShot(String shotId) throws IOException, JsonSyntaxException{
-        String url = SHOTS_END_POINT + "/" + shotId + "/like";
-        FormBody formBody = new FormBody.Builder().build();
-        return parseResponse(makePostRequest(url, formBody), LIKE_TYPE);
-    }
-
-    public static void removeLikeShot(String shotId) throws IOException, JsonSyntaxException{
-        String url = SHOTS_END_POINT + "/" + shotId + "/like";
-        FormBody formBody = new FormBody.Builder().build();
-        Response response = makeDeleteRequest(url, formBody);
-        checkStatusCode(response, HttpURLConnection.HTTP_NO_CONTENT);
-    }
-
-    //Note <List shots for a bucket> doesn't work with page
-    public static List<Shot> getBucketShots(String bucketId, int page) throws IOException, JsonSyntaxException{
-        String url = BUCKETS_END_POINT + "/" + bucketId + "/shots";  //?per_page=" + page;
-        return parseResponse(makeGetRequest(url), SHOT_LIST_TYPE);
-    }
 }

@@ -19,7 +19,7 @@ public class ChooseBucketActivity extends SingleFragmentActivity {
     protected Fragment newFragment() {
         ArrayList<String> chosenBucketIds = getIntent().getStringArrayListExtra(
                 BucketListFragment.KEY_CHOSEN_BUCKET_IDS);
-        return BucketListFragment.newInstance(true, chosenBucketIds);
+        return BucketListFragment.newInstance(null, true, chosenBucketIds);
     }
 
     @NonNull

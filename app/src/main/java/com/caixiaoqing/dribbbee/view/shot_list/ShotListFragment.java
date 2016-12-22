@@ -1,12 +1,15 @@
 package com.caixiaoqing.dribbbee.view.shot_list;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.os.AsyncTaskCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
@@ -20,8 +23,13 @@ import com.caixiaoqing.dribbbee.R;
 import com.caixiaoqing.dribbbee.dribbble.Dribbble;
 import com.caixiaoqing.dribbbee.model.Shot;
 import com.caixiaoqing.dribbbee.model.User;
+import com.caixiaoqing.dribbbee.utils.ModelUtils;
+import com.caixiaoqing.dribbbee.view.base.DribbbeeAsyncTask;
+import com.caixiaoqing.dribbbee.view.base.DribbbeeException;
+import com.caixiaoqing.dribbbee.view.base.InfiniteAdapter;
 import com.caixiaoqing.dribbbee.view.base.SpaceItemDecoration;
-import com.caixiaoqing.dribbbee.view.bucket_list.BucketListFragment;
+import com.caixiaoqing.dribbbee.view.shot_detail.ShotFragment;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -36,17 +44,49 @@ import butterknife.ButterKnife;
  */
 
 public class ShotListFragment extends Fragment {
-    private static final String KEY_LIKING_MODE = "liking_mode";
-    private static final String KEY_BUCKET_ID = "bucket_id";
-    @BindView(R.id.recycler_view) RecyclerView recyclerView;
 
+    //Let ShotActivity return result
+    public static final int REQ_CODE_SHOT = 100;
+
+    public static final int LIST_TYPE_POPULAR = 1;
+    public static final int LIST_TYPE_LIKED = 2;
+    public static final int LIST_TYPE_BUCKET = 3;
+
+    private int listType;
+
+    private static final String KEY_LIKING_MODE = "liking_mode";//TODO delete
+    public static final String KEY_LIST_TYPE = "listType";
+    public static final String KEY_BUCKET_ID = "bucket_id";
+
+    @BindView(R.id.recycler_view) RecyclerView recyclerView;
+    @BindView(R.id.swipe_refresh_container) SwipeRefreshLayout swipeRefreshLayout;
+
+    private ShotListAdapterOld adapter_old;
     private ShotListAdapter adapter;
     private boolean isLikingMode;
     private String bucketId;
 
-    public static ShotListFragment newInstance(boolean isLikingMode, String bucketId) {
+    private InfiniteAdapter.LoadMoreListener onLoadMore = new InfiniteAdapter.LoadMoreListener() {
+        @Override
+        public void onLoadMore() {
+            if (Dribbble.isLoggedIn()) {
+                AsyncTaskCompat.executeParallel(new LoadShotsTask(false));
+            }
+        }
+    };
+
+    public static ShotListFragment newInstance(int listType) {
         Bundle args = new Bundle();
-        args.putBoolean(KEY_LIKING_MODE, isLikingMode);
+        args.putInt(KEY_LIST_TYPE, listType);
+
+        ShotListFragment fragment = new ShotListFragment();
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    public static ShotListFragment newBucketListInstance(@NonNull String bucketId) {
+        Bundle args = new Bundle();
+        args.putInt(KEY_LIST_TYPE, LIST_TYPE_BUCKET);
         args.putString(KEY_BUCKET_ID, bucketId);
 
         ShotListFragment fragment = new ShotListFragment();
@@ -59,173 +99,99 @@ public class ShotListFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_recycler_view, container, false);
+        View view = inflater.inflate(R.layout.fragment_swipe_recycler_view, container, false);
         ButterKnife.bind(this, view);
         return view;
     }
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-        isLikingMode = getArguments().getBoolean(KEY_LIKING_MODE);
-        bucketId = getArguments().getString(KEY_BUCKET_ID);
+        listType = getArguments().getInt(KEY_LIST_TYPE);
+
+        swipeRefreshLayout.setEnabled(false);
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                AsyncTaskCompat.executeParallel(new LoadShotsTask(true));
+            }
+        });
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.addItemDecoration(new SpaceItemDecoration(
-               getResources().getDimensionPixelSize(R.dimen.spacing_medium)));
+                getResources().getDimensionPixelSize(R.dimen.spacing_medium)));
 
-        //Data flow 1: ShotListFragment(generate data list) -> ShotListAdapter()
-        //Infinite loading list 5: load shot + load More
-
-        adapter = new ShotListAdapter(new ArrayList<Shot>(), new ShotListAdapter.LoadMoreListener() {
-            @Override
-            public void onLoadMore() {
-                // this method will be called when the RecyclerView is displayed
-                // page starts from 1
-                if (!isLikingMode && bucketId.isEmpty()) {
-                    AsyncTaskCompat.executeParallel(new LoadShotTask(adapter.getDataCount() / Dribbble.COUNT_PER_PAGE + 1));
-                }
-                else if(isLikingMode){
-                    AsyncTaskCompat.executeParallel(new LoadUserLikesTask(adapter.getDataCount() / Dribbble.COUNT_PER_PAGE + 1));
-                }
-                else {
-                    AsyncTaskCompat.executeParallel(new LoadBucketTask(bucketId, adapter.getDataCount() / Dribbble.COUNT_PER_PAGE + 1));
-                }
-
-            }
-        });
+        adapter = new ShotListAdapter(this, new ArrayList<Shot>(), onLoadMore);
         recyclerView.setAdapter(adapter);
     }
 
-    private class LoadShotTask extends AsyncTask<Void, Void, List<Shot>> {
+    //Handler for shotListFragment.startActivityForResult -> come back from ShotActivity.class
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQ_CODE_SHOT && resultCode == Activity.RESULT_OK) {
+            Shot updatedShot = ModelUtils.toObject(data.getStringExtra(ShotFragment.KEY_SHOT),
+                    new TypeToken<Shot>(){});
+            for(int i = 0; i < adapter.getData().size(); i++) {
+                Shot shot = adapter.getData().get(i);
+                if (TextUtils.equals(shot.id, updatedShot.id)) {
+                    shot.likes_count = updatedShot.likes_count;
+                    shot.buckets_count = updatedShot.buckets_count;
 
-        int page;
-
-        public LoadShotTask(int page) {
-            this.page = page;
-        }
-
-        @Override
-        protected List<Shot> doInBackground(Void... params) {
-            try {
-                return Dribbble.getShots(page);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(List<Shot> shots) {
-            if (shots != null) {
-                adapter.append(shots);
-            } else {
-                Snackbar.make(getView(), "Error!", Snackbar.LENGTH_LONG).show();
-            }
-        }
-    }
-
-    private class LoadUserLikesTask extends AsyncTask<Void, Void, List<Shot>> {
-
-        int page;
-
-        public LoadUserLikesTask(int page) {
-            this.page = page;
-        }
-
-        @Override
-        protected List<Shot> doInBackground(Void... params) {
-            try {
-                return Dribbble.getUserLikes(page);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(List<Shot> shots) {
-            if (shots != null) {
-                for(Shot s : shots) {
-                    s.liked = true;
+                    if(listType == LIST_TYPE_BUCKET || listType == LIST_TYPE_LIKED) {
+                        Boolean isDeleted = data.getBooleanExtra(ShotFragment.KEY_REMOVE_SHOT, false);
+                        if(isDeleted) {
+                            adapter.getData().remove(i);
+                            Toast.makeText(getContext(), "to delete ", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                    break;
                 }
-                adapter.append(shots);
-                adapter.setShowLoading(shots.size() == Dribbble.COUNT_PER_PAGE);
-            } else {
-                Snackbar.make(getView(), "Error!", Snackbar.LENGTH_LONG).show();
             }
+
+            adapter.notifyDataSetChanged();
         }
     }
 
-    private class LoadBucketTask extends AsyncTask<Void, Void, List<Shot>> {
+    private class LoadShotsTask extends DribbbeeAsyncTask<Void, Void, List<Shot>> {
 
-        String bucketId;
-        int page;
+        private boolean refresh;
 
-        public LoadBucketTask(String bucketId, int page) {
-            this.bucketId = bucketId;
-            this.page = page;
+        private LoadShotsTask(boolean refresh) {
+            this.refresh = refresh;
         }
 
         @Override
-        protected List<Shot> doInBackground(Void... params) {
-            try {
-                return Dribbble.getBucketShots(bucketId, page);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
+        protected List<Shot> doJob(Void... params) throws DribbbeeException {
+            int page = refresh ? 1 : adapter.getData().size() / Dribbble.COUNT_PER_LOAD + 1;
+            switch (listType) {
+                case LIST_TYPE_POPULAR:
+                    return Dribbble.getShots(page);
+                case LIST_TYPE_LIKED:
+                    return Dribbble.getLikedShots(page);
+                case LIST_TYPE_BUCKET:
+                    String bucketId = getArguments().getString(KEY_BUCKET_ID);
+                    return Dribbble.getBucketShots(bucketId, page);
+                default:
+                    return Dribbble.getShots(page);
             }
         }
 
         @Override
-        protected void onPostExecute(List<Shot> shots) {
-            if (shots != null) {
-                Log.i("open bucket", String.valueOf(shots.size()));
-                Log.i("open bucket", String.valueOf(shots.size()));
-                Log.i("open bucket", String.valueOf(shots.size()));
-                Log.i("open bucket", String.valueOf(shots.size()));
-                Log.i("open bucket", String.valueOf(shots.size()));
-                Log.i("open bucket", String.valueOf(shots.size()));
-                Log.i("open bucket", String.valueOf(shots.size()));
-                adapter.append(shots);
-                adapter.setShowLoading(shots.size() == Dribbble.COUNT_PER_PAGE);
+        protected void onSuccess(List<Shot> shots) {
+            adapter.setShowLoading(shots.size() >= Dribbble.COUNT_PER_LOAD);
+
+            if (refresh) {
+                swipeRefreshLayout.setRefreshing(false);
+                adapter.setData(shots);
             } else {
-                Snackbar.make(getView(), "Error!", Snackbar.LENGTH_LONG).show();
+                swipeRefreshLayout.setEnabled(true);
+                adapter.append(shots);
             }
         }
-    }
 
-    private List<Shot> fakeData(int page) {
-        List<Shot> shotList = new ArrayList<>();
-        Random random = new Random();
-
-        int count = page < 2 ? Dribbble.COUNT_PER_PAGE : 10;
-
-        for (int i = 0; i < count; ++i) {
-            Shot shot = new Shot();
-            shot.title = "shot" + i;
-            shot.views_count = random.nextInt(10000);
-            shot.likes_count = random.nextInt(200);
-            shot.buckets_count = random.nextInt(50);
-            shot.description = makeDescription();
-
-            shot.user = new User();
-            shot.user.name = shot.title + " author";
-
-            shotList.add(shot);
+        @Override
+        protected void onFailed(DribbbeeException e) {
+            Snackbar.make(getView(), e.getMessage(), Snackbar.LENGTH_LONG).show();
         }
-        return shotList;
     }
 
-    private static final String[] words = {
-            "bottle", "bowl", "brick", "building", "bunny", "cake", "car", "cat", "cup",
-            "desk", "dog", "duck", "elephant", "engineer", "fork", "glass", "griffon", "hat", "key",
-            "knife", "lawyer", "llama", "manual", "meat", "monitor", "mouse", "tangerine", "paper",
-            "pear", "pen", "pencil", "phone", "physicist", "planet", "potato", "road", "salad",
-            "shoe", "slipper", "soup", "spoon", "star", "steak", "table", "terminal", "treehouse",
-            "truck", "watermelon", "window"
-    };
-
-    private static String makeDescription() {
-        return TextUtils.join(" ", words);
-    }
 }
