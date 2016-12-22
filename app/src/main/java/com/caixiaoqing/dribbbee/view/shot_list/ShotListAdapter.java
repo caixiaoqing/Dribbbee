@@ -40,6 +40,7 @@ public class ShotListAdapter extends InfiniteAdapter<Shot> {
         return new ShotViewHolder(view);
     }
 
+    //Go to ShotActivity
     @Override
     protected void onBindItemViewHolder(BaseViewHolder holder, int position) {
         ShotViewHolder shotViewHolder = (ShotViewHolder) holder;

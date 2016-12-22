@@ -54,14 +54,12 @@ public class ShotListFragment extends Fragment {
 
     private int listType;
 
-    private static final String KEY_LIKING_MODE = "liking_mode";//TODO delete
     public static final String KEY_LIST_TYPE = "listType";
     public static final String KEY_BUCKET_ID = "bucket_id";
 
     @BindView(R.id.recycler_view) RecyclerView recyclerView;
     @BindView(R.id.swipe_refresh_container) SwipeRefreshLayout swipeRefreshLayout;
 
-    private ShotListAdapterOld adapter_old;
     private ShotListAdapter adapter;
     private boolean isLikingMode;
     private String bucketId;
@@ -140,7 +138,6 @@ public class ShotListFragment extends Fragment {
                         Boolean isDeleted = data.getBooleanExtra(ShotFragment.KEY_REMOVE_SHOT, false);
                         if(isDeleted) {
                             adapter.getData().remove(i);
-                            Toast.makeText(getContext(), "to delete ", Toast.LENGTH_SHORT).show();
                         }
                     }
                     break;

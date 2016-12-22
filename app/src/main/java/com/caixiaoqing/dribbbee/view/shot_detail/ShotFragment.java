@@ -47,12 +47,9 @@ import butterknife.ButterKnife;
 public class ShotFragment extends Fragment {
 
     public static final String KEY_SHOT = "shot";
-    public static final String KEY_LIKE_ID = "like_id";
-    public static final String KEY_IS_LIKED = "is_liked";
     public static final String KEY_REMOVE_SHOT = "shot_rm";
 
     public static final int REQ_CODE_BUCKET = 100;
-    public static final int REQ_CODE_LIKE = 101;
 
     @BindView(R.id.recycler_view) RecyclerView recyclerView;
 
@@ -61,7 +58,6 @@ public class ShotFragment extends Fragment {
     private boolean isLiking;
     private ArrayList<String> collectedBucketIds;
 
-    //Data flow 5 :
     public static ShotFragment newInstance(@NonNull Bundle args) {
         ShotFragment fragment = new ShotFragment();
         fragment.setArguments(args);
@@ -89,7 +85,7 @@ public class ShotFragment extends Fragment {
 
         isLiking = true;
         AsyncTaskCompat.executeParallel(new CheckLikeTask());
-        //Bucket 2.3 : to load buckets => so ShotAdapter know if it should be bucketed or not
+        //Bucket 0.0 : to load buckets => so ShotAdapter know if it should be bucketed or not
         //set collectedBucketIds
         AsyncTaskCompat.executeParallel(new LoadBucketsTask());
     }
@@ -252,6 +248,7 @@ public class ShotFragment extends Fragment {
         }
     }
 
+    //Bucket 3.1 : go to add/remove Bucket from Dribbble
     private class UpdateBucketTask extends DribbbeeAsyncTask<Void, Void, Void> {
 
         private List<String> added;
@@ -294,6 +291,7 @@ public class ShotFragment extends Fragment {
         }
     }
 
+    //Bucket 3.2 : update Bucket to the ListView
     //Be called in LikeTask() & UpdateBucketTask(), getActivity().setResult() for ShotListFragment to update
     private void setResult(boolean removeFromList) {
         Intent resultIntent = new Intent();

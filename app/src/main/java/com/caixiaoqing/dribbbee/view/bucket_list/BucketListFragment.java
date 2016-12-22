@@ -2,7 +2,6 @@ package com.caixiaoqing.dribbbee.view.bucket_list;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -27,9 +26,7 @@ import com.caixiaoqing.dribbbee.view.base.DribbbeeAsyncTask;
 import com.caixiaoqing.dribbbee.view.base.DribbbeeException;
 import com.caixiaoqing.dribbbee.view.base.InfiniteAdapter;
 import com.caixiaoqing.dribbbee.view.base.SpaceItemDecoration;
-import com.google.gson.JsonSyntaxException;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -46,7 +43,6 @@ import butterknife.ButterKnife;
 public class BucketListFragment extends Fragment {
 
     public static final int REQ_CODE_NEW_BUCKET = 100;
-    public static final int REQ_CODE_OPEN_BUCKET = 101;
 
     @BindView(R.id.recycler_view) RecyclerView recyclerView;
     @BindView(R.id.fab) FloatingActionButton fab;
@@ -56,15 +52,11 @@ public class BucketListFragment extends Fragment {
     public static final String KEY_CHOOSING_MODE = "choose_mode";
     public static final String KEY_CHOSEN_BUCKET_IDS = "chosen_bucket_ids";
     public static final String KEY_COLLECTED_BUCKET_IDS = "collected_bucket_ids";
-    public static final String KEY_BUCKET_ID = "bucket_id";
-    public static final String KEY_BUCKET_NAME = "bucket_name";
 
-    BucketListAdapterOld adapter_old;
     BucketListAdapter adapter;
     private String userId;
     private boolean isChoosingMode;
     private Set<String> collectedBucketIdSet;
-    //private List<String> chosenBucketIds;
 
     private InfiniteAdapter.LoadMoreListener onLoadMore = new InfiniteAdapter.LoadMoreListener() {
         @Override

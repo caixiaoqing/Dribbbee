@@ -41,6 +41,13 @@ public class BucketListAdapter extends InfiniteAdapter<Bucket> {
 
     @Override
     protected void onBindItemViewHolder(BaseViewHolder holder, final int position) {
+        // note the warning for "final int position", it's for recycler view drag and drop
+        // after drag and drop onBindViewHolder will not be call again with the new position,
+        // that's why you should not assume this position is always fixed.
+
+        // in our case, we do not support drag and drop in bucket list because Dribbble API
+        // doesn't support reordering buckets, so using "final int position" is fine
+
         final Bucket bucket = getData().get(position);
         final BucketViewHolder bucketViewHolder = (BucketViewHolder) holder;
 

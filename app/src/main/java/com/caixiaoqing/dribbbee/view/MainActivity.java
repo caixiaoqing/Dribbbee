@@ -86,7 +86,6 @@ public class MainActivity extends AppCompatActivity {
 
         drawerLayout.setDrawerListener(drawerToggle);
 
-        // dynamically set header, the header is not specified in main_activity.xml layout
         setupNavHeader();
 
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
@@ -98,7 +97,6 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 Fragment fragment = null;
-                boolean isLikingFragment = true;
                 switch (item.getItemId()) {
                     case R.id.drawer_item_home:
                         fragment = ShotListFragment.newInstance(ShotListFragment.LIST_TYPE_POPULAR);
@@ -109,9 +107,9 @@ public class MainActivity extends AppCompatActivity {
                         setTitle(R.string.title_likes);
                         break;
                     case R.id.drawer_item_buckets:
-                        fragment = BucketListFragment.newInstance(/* userId */null,
-                                                                /* isChoosingMode */false,
-                                                                /* chosenBucketIds */null);
+                        fragment = BucketListFragment.newInstance(null /* userId */,
+                                                                  false/* isChoosingMode */,
+                                                                  null /* chosenBucketIds */);
                         setTitle(R.string.title_buckets);
                         break;
                 }
@@ -132,7 +130,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupNavHeader() {
+        //header is static set in main_activity.xml layout
         //View headerView = navigationView.getHeaderView(0);
+
+        //dynamically set header, the header is not specified in main_activity.xml layout
         View headerView = navigationView.inflateHeaderView(R.layout.nav_header);
 
         ((TextView) headerView.findViewById(R.id.nav_header_user_name)).setText(

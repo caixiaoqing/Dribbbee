@@ -16,7 +16,6 @@ public class ShotActivity extends SingleFragmentActivity {
     @NonNull
     @Override
     protected Fragment newFragment() {
-        //Data flow 4 : ShotActivity(getIntent) -> ShotFragment.newInstance()
         return ShotFragment.newInstance(getIntent().getExtras());
     }
 

@@ -95,7 +95,6 @@ class ShotAdapter extends RecyclerView.Adapter{
                         : ContextCompat.getDrawable(shotDetailViewHolder.itemView.getContext(), R.drawable.ic_inbox_black_18dp);
                 shotDetailViewHolder.bucketButton.setImageDrawable(bucketDrawable);
 
-                //shot.liked ?
                 Drawable likeDrawable = shot.liked
                         ? ContextCompat.getDrawable(shotDetailViewHolder.itemView.getContext(), R.drawable.ic_favorite_dribbble_18dp)
                         :  ContextCompat.getDrawable(shotDetailViewHolder.itemView.getContext(), R.drawable.ic_favorite_black_18dp);

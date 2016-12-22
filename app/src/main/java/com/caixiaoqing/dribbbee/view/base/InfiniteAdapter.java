@@ -20,6 +20,7 @@ public abstract class InfiniteAdapter<M> extends RecyclerView.Adapter<BaseViewHo
     private static final int TYPE_ITEM = 0;
     private static final int TYPE_LOADING = 1;
 
+    //Infinite loading list 4: callback for onLoadMore (ShotListFragment / ...)
     private final LoadMoreListener loadMoreListener;
     private boolean showLoading;
 
@@ -38,6 +39,7 @@ public abstract class InfiniteAdapter<M> extends RecyclerView.Adapter<BaseViewHo
         this.showLoading = true;
     }
 
+    //Infinite loading list 2: loading xml -- list_item_loading + (no data binding)
     @Override
     public BaseViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         if (viewType == TYPE_LOADING) {
@@ -50,6 +52,9 @@ public abstract class InfiniteAdapter<M> extends RecyclerView.Adapter<BaseViewHo
         }
     }
 
+    //Infinite loading list 3:
+    //      3.1 load more data	(in a separate thread) -> come back to UI
+    //      3.2 data binding - shot
     @Override
     public void onBindViewHolder(BaseViewHolder holder, int position) {
         final int viewType = getItemViewType(position);
@@ -61,6 +66,7 @@ public abstract class InfiniteAdapter<M> extends RecyclerView.Adapter<BaseViewHo
         }
     }
 
+    //Infinite loading list 1: shot + loading
     @Override
     public int getItemCount() {
         return showLoading ? data.size() + 1 : data.size();
@@ -89,6 +95,7 @@ public abstract class InfiniteAdapter<M> extends RecyclerView.Adapter<BaseViewHo
         notifyDataSetChanged();
     }
 
+    //Infinite loading list 6 -> come back to UI
     public void append(@NonNull List<M> data) {
         this.data.addAll(data);
         notifyDataSetChanged();

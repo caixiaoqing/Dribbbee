@@ -171,6 +171,27 @@ public class Dribbble {
 
         accessToken = null;
         user = null;
+        clearCookies(context);
+    }
+
+    @SuppressWarnings("deprecation")
+    public static void clearCookies(Context context)
+    {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            //Log.d(C.TAG, "Using clearCookies code for API >=" + String.valueOf(Build.VERSION_CODES.LOLLIPOP_MR1));
+            CookieManager.getInstance().removeAllCookies(null);
+            CookieManager.getInstance().flush();
+        }
+        else {
+            //Log.d(C.TAG, "Using clearCookies code for API <" + String.valueOf(Build.VERSION_CODES.LOLLIPOP_MR1));
+            CookieSyncManager cookieSyncMngr=CookieSyncManager.createInstance(context);
+            cookieSyncMngr.startSync();
+            CookieManager cookieManager=CookieManager.getInstance();
+            cookieManager.removeAllCookie();
+            cookieManager.removeSessionCookie();
+            cookieSyncMngr.stopSync();
+            cookieSyncMngr.sync();
+        }
     }
 
     public static User getCurrentUser() {
@@ -305,7 +326,7 @@ public class Dribbble {
     //Note <List shots for a bucket> doesn't work with page  TODO test again
     public static List<Shot> getBucketShots(@NonNull String bucketId,
                                             int page) throws DribbbeeException {
-        String url = BUCKETS_END_POINT + "/" + bucketId + "/shots"; //"?per_page=" + page;
+        String url = BUCKETS_END_POINT + "/" + bucketId + "/shots"; //''?per_page=" + page;
         return parseResponse(makeGetRequest(url), SHOT_LIST_TYPE);
     }
 
