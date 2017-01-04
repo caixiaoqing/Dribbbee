@@ -7,9 +7,9 @@ Dribbble Android Client App
 #### :memo:  Using NavigationDrawer and Toolbar to organise Main UI
 #### :inbox_tray:  Load data by Dribbble Restful API with **AsyncTask**
 #### :volcano:  Loading and caching images using third party library
-● Picasso (no gif support)
+> ● Picasso (no gif support)
 
-● Fresco
+> ● Fresco
 
 #### :arrows_counterclockwise:  Implement **Infinite loading list** with mixed-typed adapter and AsyncTask. 
 
