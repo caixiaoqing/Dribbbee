@@ -1,25 +1,30 @@
 # Dribbbee
-Dribbble Android Client App
+Dribbble Android Client
 
-#### :key:  Login with user's Dribbble account
+#### <i class="icon-login"></i> 1. Login with user's Dribbble account
 > **Note:** using **[OkHttp](http://square.github.io/okhttp/)** and **[WebView](https://developer.android.com/reference/android/webkit/WebView.html)** to let user go through [OAuth](http://developer.dribbble.com/v1/oauth/) process of Dribbble
 
-#### :memo:  Using NavigationDrawer and Toolbar to organise Main UI
-#### :inbox_tray:  Load data by Dribbble Restful API with **AsyncTask**
-#### :volcano:  Loading and caching images using third party library
-> ● Picasso (no gif support)
+#### <i class="icon-file"></i> 2. Using NavigationDrawer and Toolbar to organise Main UI
+#### <i class="icon-download"></i> 3. Load data by Dribbble Restful API with **AsyncTask**
+#### <i class="icon-picture"></i> 4. Loading and caching images using third party library
+>● [Picasso](http://square.github.io/picasso/) (no gif support)
+>
+>● [Fresco](http://frescolib.org/)
 
-> ● Fresco
-
-#### :arrows_counterclockwise:  Implement **Infinite loading list** with mixed-typed adapter and AsyncTask. 
+#### <i class="icon-refresh"></i> 5. Implement **Infinite loading list** with mixed-typed adapter and AsyncTask. 
 
 
-
+<br>
+<br>
+<br>
+<br>
 ----------
 
+<br>
 
 
-#### Activities, Fragments with Dribbble API Diagram for Dribbble shot/like/bucket features
+
+#### Diagram of Activities, Fragments with Dribbble API for Dribbble shot/like/bucket features
 
 ![enter image description here](https://lh3.googleusercontent.com/-jBvRElaWANY/WGzOW5TB46I/AAAAAAAAAAU/BiOdCBQ7POghrbw_IkEz9OHZAOEYtmHlACLcB/s0/Screen+Shot+2017-01-04+at+6.28.00+pm.png "oauth.png")
 
