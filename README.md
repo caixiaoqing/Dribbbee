@@ -25,9 +25,23 @@ Dribbble Android Client
 
 
 #### Diagram of Activities, Fragments with Dribbble API for Dribbble shot/like/bucket features
+<br>
 
 ![enter image description here](https://lh3.googleusercontent.com/-jBvRElaWANY/WGzOW5TB46I/AAAAAAAAAAU/BiOdCBQ7POghrbw_IkEz9OHZAOEYtmHlACLcB/s0/Screen+Shot+2017-01-04+at+6.28.00+pm.png "oauth.png")
 
-![enter image description here](https://lh3.googleusercontent.com/-eLb6bYUOJfA/WG0eiP3y4cI/AAAAAAAAAA8/VsQJt3BZh0UTrz-1Dg3Tw0KM6ZwH-P1CgCLcB/s0/Screen+Shot+2017-01-04+at+11.47.25+pm.png "org.png")
+![enter image description here](https://lh3.googleusercontent.com/-KGENNN4Yi6s/WG2zzn4Vt3I/AAAAAAAAABg/d2D1gUg3QAw0VYX5936DeVdYTzw5qmysgCLcB/s0/Screen+Shot+2017-01-05+at+10.44.26+am.png "org.png")
 
-![enter image description here](https://lh3.googleusercontent.com/-To0JawxRmjs/WG0etexSPpI/AAAAAAAAABE/zI6m_hCOX_wZaFQ6enTVhs_FMMKZWEyPwCLcB/s0/Screen+Shot+2017-01-05+at+12.08.32+am.png "like-bucket.png")
+![enter image description here](https://lh3.googleusercontent.com/-nYZgCT3FUmU/WG2z5dDh7xI/AAAAAAAAABo/qX8YMdJTm-UjI2TQTcKAHnBoLu2mXCf1QCLcB/s0/Screen+Shot+2017-01-05+at+10.45.01+am.png "like-bucket.png")
+
+
+|              | Dribbble REST API                                                                   | Description                                               |
+|---------------|-------------------------------------------------------------------------------------|-----------------------------------------------------------|
+| shots         | GET /shots                                                                          | Get the shots                                             |
+| shots         | GET /shots/:id/like                                                                 | Check if user liked a shot                                |
+| shots         | POST /shots/:id/like <br> DELETE /shots/:id/like                                    | Like / Unlike a shot                                      |
+| user          | GET /user/likes                                                                     | Get the shots userliked                                   |
+| user          | GET /user/buckets                                                                   | Get the shots user bucketed                               |
+| user, buckets | ![enter image description here](https://lh3.googleusercontent.com/-y0kSX7uVOEo/WG24Qjey-bI/AAAAAAAAAB8/Go3_OR-K9YMSptYaFFC0AWJGzo-CfWQxQCLcB/s0/Screen+Shot+2017-01-05+at+10.56.48+am.png "bucket.png")                                                                                    | Check if user bucketed a shot                             |
+| buckets       | PUT /buckets/:id/shots <br> body={shot_id:**} <br> <br> DELETE /buckets/:id/shots   | Add a shot into a bucket <br> Remove a shot from a bucket |
+
+
